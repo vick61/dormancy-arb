@@ -1,0 +1,17 @@
+# Netlify static site — use a neutral hostname like:
+#   https://<your-site-name>.netlify.app
+# (no GitHub username in the URL)
+#
+# Deploy (after one-time login):
+#   npx netlify-cli login
+#   cd deploy && npx netlify-cli deploy --prod --dir=.
+
+[build]
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
