@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ARB Document - Dormancy Management System Migration - CBSL 2.0</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code&display=swap');
+
+  :root {
+    --primary: #1a365d;
+    --primary-light: #2b6cb0;
+    --accent: #dd6b20;
+    --accent-light: #ed8936;
+    --success: #276749;
+    --danger: #c53030;
+    --warning: #d69e2e;
+    --gray-50: #f7fafc;
+    --gray-100: #edf2f7;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e0;
+    --gray-500: #718096;
+    --gray-600: #4a5568;
+    --gray-700: #2d3748;
+    --gray-800: #1a202c;
+    --aws-orange: #ff9900;
+    --aws-blue: #232f3e;
+    --kong-green: #003459;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--gray-800);
+    line-height: 1.7;
+    background: #fff;
+    font-size: 14px;
+  }
+
+  .page-break { page-break-after: always; break-after: page; }
+
+  /* Cover Page */
+  .cover-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--primary) 0%, #2c5282 50%, var(--primary-light) 100%);
+    color: white;
+    padding: 60px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cover-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+  }
+
+  .cover-logo {
+    font-size: 18px;
+    font-weight: 300;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    margin-bottom: 60px;
+    opacity: 0.8;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+    padding-bottom: 20px;
+  }
+
+  .cover-title {
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 15px;
+    letter-spacing: -0.5px;
+  }
+
+  .cover-subtitle {
+    font-size: 22px;
+    font-weight: 300;
+    margin-bottom: 50px;
+    opacity: 0.9;
+  }
+
+  .cover-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px 60px;
+    text-align: left;
+    font-size: 14px;
+    background: rgba(255,255,255,0.1);
+    padding: 30px 40px;
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+  }
+
+  .cover-meta dt { font-weight: 300; opacity: 0.7; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  .cover-meta dd { font-weight: 500; margin-bottom: 10px; }
+
+  .cover-badge {
+    margin-top: 40px;
+    padding: 8px 24px;
+    background: var(--accent);
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  /* Main Content */
+  .content {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 60px;
+  }
+
+  /* TOC */
+  .toc {
+    padding: 40px 60px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .toc h2 {
+    font-size: 28px;
+    color: var(--primary);
+    margin-bottom: 30px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--primary);
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: toc;
+  }
+
+  .toc > ol > li {
+    counter-increment: toc;
+    margin-bottom: 8px;
+  }
+
+  .toc > ol > li > a {
+    display: flex;
+    align-items: baseline;
+    text-decoration: none;
+    color: var(--gray-700);
+    font-weight: 500;
+    font-size: 15px;
+    padding: 6px 0;
+    border-bottom: 1px dotted var(--gray-300);
+  }
+
+  .toc > ol > li > a::before {
+    content: counter(toc) ".";
+    min-width: 30px;
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  .toc > ol > li > a:hover { color: var(--primary-light); }
+
+  .toc .toc-sub {
+    list-style: none;
+    padding-left: 30px;
+    margin-top: 4px;
+  }
+
+  .toc .toc-sub li a {
+    text-decoration: none;
+    color: var(--gray-600);
+    font-size: 13px;
+    padding: 3px 0;
+    display: block;
+  }
+
+  /* Headings */
+  h1 {
+    font-size: 28px;
+    color: var(--primary);
+    margin: 50px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 3px solid var(--primary);
+    letter-spacing: -0.3px;
+  }
+
+  h2 {
+    font-size: 22px;
+    color: var(--primary);
+    margin: 35px 0 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--gray-200);
+  }
+
+  h3 {
+    font-size: 17px;
+    color: var(--primary-light);
+    margin: 25px 0 12px;
+    font-weight: 600;
+  }
+
+  h4 {
+    font-size: 15px;
+    color: var(--gray-700);
+    margin: 20px 0 10px;
+    font-weight: 600;
+  }
+
+  p { margin-bottom: 12px; color: var(--gray-700); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--primary);
+    color: white;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--gray-200);
+    vertical-align: top;
+  }
+
+  tbody tr:nth-child(even) { background: var(--gray-50); }
+  tbody tr:hover { background: var(--gray-100); }
+
+  /* Severity badges */
+  .severity-high {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #fed7d7;
+    color: var(--danger);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .severity-medium {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #fefcbf;
+    color: #975a16;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+  .severity-low {
+    display: inline-block;
+    padding: 2px 10px;
+    background: #c6f6d5;
+    color: var(--success);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 11px;
+  }
+
+  /* Lists */
+  ul, ol {
+    margin: 10px 0 15px 25px;
+    color: var(--gray-700);
+  }
+
+  li { margin-bottom: 6px; }
+
+  /* Callout Boxes */
+  .callout {
+    padding: 16px 20px;
+    border-radius: 8px;
+    margin: 20px 0;
+    border-left: 4px solid;
+  }
+
+  .callout-info {
+    background: #ebf8ff;
+    border-color: #3182ce;
+  }
+
+  .callout-warning {
+    background: #fffff0;
+    border-color: var(--warning);
+  }
+
+  .callout-success {
+    background: #f0fff4;
+    border-color: var(--success);
+  }
+
+  .callout-title {
+    font-weight: 700;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+
+  .callout-info .callout-title { color: #2b6cb0; }
+  .callout-warning .callout-title { color: #975a16; }
+  .callout-success .callout-title { color: var(--success); }
+
+  /* Code */
+  code {
+    font-family: 'Fira Code', monospace;
+    background: var(--gray-100);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--accent);
+  }
+
+  /* Diagram container */
+  .diagram-container {
+    margin: 25px 0;
+    padding: 25px;
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: 10px;
+    overflow-x: auto;
+  }
+
+  .diagram-container .diagram-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .diagram-caption {
+    font-size: 12px;
+    color: var(--gray-500);
+    text-align: center;
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* Architecture diagram styles */
+  .arch-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .arch-row {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .arch-box {
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    min-width: 120px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    position: relative;
+  }
+
+  .arch-box small {
+    display: block;
+    font-weight: 400;
+    font-size: 10px;
+    opacity: 0.8;
+    margin-top: 3px;
+  }
+
+  .box-aws-sqs { background: linear-gradient(135deg, #ff9900, #ffb84d); color: #232f3e; }
+  .box-aws-dynamo { background: linear-gradient(135deg, #3b48cc, #527fff); color: white; }
+  .box-iceberg { background: linear-gradient(135deg, #0fb5ae, #4dd0e1); color: white; }
+  .box-kong { background: linear-gradient(135deg, #003459, #00659e); color: white; }
+  .box-finacle { background: linear-gradient(135deg, #6b46c1, #9f7aea); color: white; }
+  .box-dolphin { background: linear-gradient(135deg, #2d3748, #4a5568); color: white; }
+  .box-java { background: linear-gradient(135deg, #e53e3e, #fc8181); color: white; }
+  .box-k8s { background: linear-gradient(135deg, #326ce5, #6fa1f7); color: white; }
+  .box-source { background: linear-gradient(135deg, #2f855a, #68d391); color: white; }
+  .box-monitoring { background: linear-gradient(135deg, #d69e2e, #f6e05e); color: #744210; }
+  .box-docker { background: linear-gradient(135deg, #0db7ed, #66d3fa); color: white; }
+  .box-snp { background: linear-gradient(135deg, #ed64a6, #f687b3); color: white; }
+
+  .arrow-down {
+    width: 2px;
+    height: 30px;
+    background: var(--gray-500);
+    position: relative;
+  }
+
+  .arrow-down::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -5px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--gray-500);
+  }
+
+  .section-divider {
+    width: 100%;
+    height: 1px;
+    background: var(--gray-200);
+    margin: 10px 0;
+  }
+
+  .layer-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    padding: 5px 15px;
+    background: var(--gray-100);
+    border-radius: 20px;
+  }
+
+  /* Version history */
+  .version-table td:first-child {
+    font-weight: 600;
+    color: var(--primary);
+  }
+
+  /* Print styles */
+  @media print {
+    .cover-page { min-height: 100vh; }
+    .content { padding: 30px 40px; }
+    .page-break { page-break-after: always; }
+    body { font-size: 12px; }
+    .diagram-container { break-inside: avoid; }
+    table { break-inside: avoid; }
+  }
+
+  /* Flow step boxes */
+  .flow-steps {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin: 20px 0;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+
+  .flow-step-num {
+    min-width: 32px;
+    height: 32px;
+    background: var(--primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .flow-step-content h4 {
+    margin: 0 0 4px;
+    font-size: 14px;
+  }
+
+  .flow-step-content p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--gray-600);
+  }
+
+  .tech-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--gray-600);
+    margin: 2px;
+  }
+
+  .tech-badge-aws { background: #fff3e0; border-color: #ffcc80; color: #e65100; }
+  .tech-badge-java { background: #ffebee; border-color: #ef9a9a; color: #b71c1c; }
+  .tech-badge-k8s { background: #e3f2fd; border-color: #90caf9; color: #0d47a1; }
+</style>
+</head>
+<body>
+
+<!-- ==================== COVER PAGE ==================== -->
+<div class="cover-page">
+  <div class="cover-logo">Kotak Mahindra Bank &mdash; Technology Division</div>
+  <div class="cover-title">Architecture Review Board (ARB) Document</div>
+  <div class="cover-subtitle">Dormancy &amp; Inactivation Management System<br>CBSL 2.0 Migration</div>
+
+  <dl class="cover-meta">
+    <dt>Version</dt>
+    <dd>3.0</dd>
+    <dt>Status</dt>
+    <dd>Ready for Review</dd>
+    <dt>Date</dt>
+    <dd>April 12, 2026</dd>
+    <dt>Project</dt>
+    <dd>CBSL 2.0 &mdash; Dormancy Management</dd>
+    <dt>Author</dt>
+    <dd>Vicky Kumar (SDE-2)</dd>
+    <dt>Classification</dt>
+    <dd>Internal &mdash; Confidential</dd>
+  </dl>
+
+  <div class="cover-badge">Architecture Review Required</div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ==================== DOCUMENT CONTROL ==================== -->
+<div class="content">
+  <h1>Document Control</h1>
+
+  <h2>Version History</h2>
+  <table class="version-table">
+    <thead>
+      <tr><th>Version</th><th>Date</th><th>Author</th><th>Changes</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1.0</td><td>March 25, 2026</td><td>Vicky Kumar</td><td>Initial draft with basic architecture outline</td></tr>
+      <tr><td>2.0</td><td>April 10, 2026</td><td>Vicky Kumar</td><td>Added requirements, technology stack, and processing model</td></tr>
+      <tr><td>3.0</td><td>April 12, 2026</td><td>Vicky Kumar</td><td>Comprehensive rewrite: added architecture diagrams, sequence flows, detailed component design, API contracts, security model, deployment architecture, capacity planning, and migration strategy</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Reviewers &amp; Approvers</h2>
+  <table>
+    <thead>
+      <tr><th>Role</th><th>Name</th><th>Status</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Technical Lead</td><td>[TBD]</td><td>Pending</td><td>&mdash;</td></tr>
+      <tr><td>Architect</td><td>[TBD]</td><td>Pending</td><td>&mdash;</td></tr>
+      <tr><td>Engineering Manager</td><td>[TBD]</td><td>Pending</td><td>&mdash;</td></tr>
+      <tr><td>Information Security</td><td>[TBD]</td><td>Pending</td><td>&mdash;</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ==================== TABLE OF CONTENTS ==================== -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#exec-summary">Executive Summary</a></li>
+    <li><a href="#background">Background &amp; Problem Statement</a>
+      <ul class="toc-sub">
+        <li><a href="#current-state">Current State Architecture</a></li>
+        <li><a href="#limitations">Limitations &amp; Pain Points</a></li>
+        <li><a href="#regulatory">Regulatory Requirement (RBI Circular)</a></li>
+      </ul>
+    </li>
+    <li><a href="#requirements">Requirements</a>
+      <ul class="toc-sub">
+        <li><a href="#func-req">Functional Requirements</a></li>
+        <li><a href="#nfr">Non-Functional Requirements</a></li>
+        <li><a href="#out-of-scope">Out of Scope</a></li>
+      </ul>
+    </li>
+    <li><a href="#tenets">Architecture Tenets &amp; Principles</a></li>
+    <li><a href="#hld">High-Level Design</a>
+      <ul class="toc-sub">
+        <li><a href="#context-diagram">System Context Diagram</a></li>
+        <li><a href="#arch-overview">Architecture Overview</a></li>
+        <li><a href="#component-diagram">Component Architecture</a></li>
+      </ul>
+    </li>
+    <li><a href="#detailed-design">Detailed Design</a>
+      <ul class="toc-sub">
+        <li><a href="#data-flow">End-to-End Data Flow</a></li>
+        <li><a href="#seq-intimation">Sequence Diagram: Intimation Flow</a></li>
+        <li><a href="#seq-status">Sequence Diagram: Account Status Change</a></li>
+        <li><a href="#component-details">Component Specifications</a></li>
+      </ul>
+    </li>
+    <li><a href="#tech-stack">Technology Stack</a></li>
+    <li><a href="#integration">Integration Points &amp; API Contracts</a></li>
+    <li><a href="#data-model">Data Model</a></li>
+    <li><a href="#sla">SLA / SLO Targets</a></li>
+    <li><a href="#security">Security Considerations</a></li>
+    <li><a href="#risk">Risk Analysis &amp; Mitigation</a></li>
+    <li><a href="#failure">Failure Handling &amp; Recovery</a></li>
+    <li><a href="#testing">Testing Strategy</a></li>
+    <li><a href="#deployment">Deployment Architecture &amp; Strategy</a></li>
+    <li><a href="#monitoring">Monitoring &amp; Observability</a></li>
+    <li><a href="#capacity">Capacity Planning</a></li>
+    <li><a href="#migration">Migration Plan</a></li>
+    <li><a href="#appendix">Appendix</a></li>
+  </ol>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ==================== 1. EXECUTIVE SUMMARY ==================== -->
+<div class="content">
+  <h1 id="exec-summary">1. Executive Summary</h1>
+
+  <p>
+    This document presents the architecture for migrating the <strong>Dormancy &amp; Inactivation Management System</strong> from the legacy Finacle batch processing model to the <strong>CBSL 2.0 platform</strong>. The migration is driven by RBI Circular No. DOR.SOG (LEG).REC/64/09.08.024/2023-24, which mandates inclusion of non-financial transactions in dormancy eligibility calculations, effective January 1, 2024.
+  </p>
+
+  <p>
+    The proposed architecture adopts an <strong>event-driven microservices pattern</strong> built on AWS managed services (SQS, DynamoDB), Apache Iceberg for data warehousing, and Dolphin Scheduler for batch orchestration. The system processes ~500K accounts monthly across 7 data sources, implementing dual status transitions (Active &rarr; Inactive at 12 months, Inactive &rarr; Dormant at 24 months) and multi-channel customer intimation at regulatory milestones (9, 11, 21, 23 months).
+  </p>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Key Architectural Decisions</div>
+    <ul>
+      <li><strong>Event-driven processing</strong> via AWS SQS for decoupled, scalable message handling</li>
+      <li><strong>Consumer-Processor pattern</strong> separating data fetching from business logic execution</li>
+      <li><strong>Kong API Gateway</strong> for centralized external API management with rate limiting</li>
+      <li><strong>T-1 validation pattern</strong> ensuring account status consistency before state transitions</li>
+      <li><strong>DynamoDB</strong> for real-time state management with sub-millisecond read latency</li>
+    </ul>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 2. BACKGROUND ==================== -->
+  <h1 id="background">2. Background &amp; Problem Statement</h1>
+
+  <h2 id="current-state">2.1 Current State Architecture</h2>
+
+  <p>
+    The current dormancy management system is entirely dependent on <strong>Finacle batch processing</strong>, executing through the CRON job <code>genlimo_IDB_DORMNT_KB</code> during EOD/BOD cycles.
+  </p>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Current State &mdash; Finacle Batch Processing</div>
+    <div class="mermaid">
+flowchart LR
+    DWH[("🗄️ DWH\n(Financial Txns)")] --> MoveIT["📁 MoveIT\nFile Transfer"]
+    MoveIT --> Finacle["🏦 Finacle Core\nCRON: genlimo_IDB_DORMNT_KB"]
+    Finacle --> StatusUpdate["Account Status\nUpdate"]
+
+    style DWH fill:#e2e8f0,stroke:#4a5568
+    style MoveIT fill:#e2e8f0,stroke:#4a5568
+    style Finacle fill:#9f7aea,stroke:#6b46c1,color:#fff
+    style StatusUpdate fill:#e2e8f0,stroke:#4a5568
+    </div>
+    <div class="diagram-caption">Figure 2.1 &mdash; Legacy architecture: file-based integration with single data source</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Attribute</th><th>Current State</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Processing Model</td><td>File-based batch: DWH &rarr; MoveIT &rarr; Finacle</td></tr>
+      <tr><td>Data Sources</td><td>Single source &mdash; DWH financial transactions only</td></tr>
+      <tr><td>Eligibility Logic</td><td>Financial transactions only (legacy RBI regulation)</td></tr>
+      <tr><td>Processing Time</td><td>~X hours for 500K accounts monthly</td></tr>
+      <tr><td>Communication</td><td>Limited &mdash; no multi-channel intimation</td></tr>
+      <tr><td>Monitoring</td><td>Manual log review</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="limitations">2.2 Limitations &amp; Pain Points</h2>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Limitation</th><th>Impact</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>Heavy Finacle dependency &mdash; single point of failure</td><td><span class="severity-high">HIGH</span></td></tr>
+      <tr><td>2</td><td>Only considers financial transactions &mdash; non-compliant with new RBI regulation</td><td><span class="severity-high">HIGH</span></td></tr>
+      <tr><td>3</td><td>Difficult to implement business rule changes (requires specialist intervention)</td><td><span class="severity-medium">MEDIUM</span></td></tr>
+      <tr><td>4</td><td>No support for non-financial transaction data (NB/MB login, ATM, BCIF KYC)</td><td><span class="severity-high">HIGH</span></td></tr>
+      <tr><td>5</td><td>Manual workarounds for edge cases</td><td><span class="severity-medium">MEDIUM</span></td></tr>
+      <tr><td>6</td><td>No multi-channel customer intimation capability</td><td><span class="severity-medium">MEDIUM</span></td></tr>
+      <tr><td>7</td><td>No real-time monitoring or audit trail</td><td><span class="severity-medium">MEDIUM</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="regulatory">2.3 Regulatory Requirement</h2>
+
+  <div class="callout callout-warning">
+    <div class="callout-title">RBI Circular No. DOR.SOG (LEG).REC/64/09.08.024/2023-24</div>
+    <p><strong>Effective Date:</strong> January 1, 2024</p>
+    <p>Dormancy criteria revised to include non-financial transactions in addition to financial transactions for determining account activity status.</p>
+  </div>
+
+  <h3>New Eligibility Calculation</h3>
+  <p>Reference date for dormancy calculation = <strong>Maximum (latest)</strong> of:</p>
+  <ul>
+    <li>Last financial transaction date (Finacle)</li>
+    <li>Last NB/MB login date (digital channel)</li>
+    <li>Last ATM transaction date</li>
+    <li>Last BCIF KYC update date</li>
+    <li>Last Embark (wealth management) transaction date</li>
+    <li>Last 811 service transaction date</li>
+  </ul>
+
+  <h3>Account Status Change Timeline</h3>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Account Lifecycle &mdash; Status Transition Timeline</div>
+    <div class="mermaid">
+gantt
+    title Account Dormancy Timeline (from last activity reference date)
+    dateFormat X
+    axisFormat %s months
+
+    section Intimation
+    9-Month Intimation (SMS/Email)     :milestone, m1, 9, 0
+    11-Month Intimation (SMS/Email)    :milestone, m2, 11, 0
+    21-Month Intimation (SMS/Email)    :milestone, m3, 21, 0
+    23-Month Intimation (SMS/Email)    :milestone, m4, 23, 0
+
+    section Status Change
+    ACTIVE Period                      :active, a1, 0, 12
+    Mark INACTIVE (12 months)          :crit, milestone, s1, 12, 0
+    INACTIVE Period                    :a2, 12, 24
+    Mark DORMANT (24 months)           :crit, milestone, s2, 24, 0
+    </div>
+    <div class="diagram-caption">Figure 2.2 &mdash; RBI-mandated account status transition timeline with intimation milestones</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Month</th><th>Action</th><th>Channel</th><th>Event Type</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>9</td><td>Intimation Letter</td><td>SMS / Email via SNP API</td><td>L (Letter)</td></tr>
+      <tr><td>11</td><td>Intimation Letter</td><td>SMS / Email via SNP API</td><td>L (Letter)</td></tr>
+      <tr><td>12</td><td><strong>Status Change: ACTIVE &rarr; INACTIVE</strong></td><td>Finacle Core API</td><td>Inactivation</td></tr>
+      <tr><td>21</td><td>Intimation Letter</td><td>SMS / Email via SNP API</td><td>L (Letter)</td></tr>
+      <tr><td>23</td><td>Intimation Letter</td><td>SMS / Email via SNP API</td><td>L (Letter)</td></tr>
+      <tr><td>24</td><td><strong>Status Change: INACTIVE &rarr; DORMANT</strong></td><td>Finacle Core API</td><td>Dormant</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Communication Requirements</h3>
+  <ul>
+    <li><strong>Primary Channel:</strong> SMS/Email via SNP API (if contact details available)</li>
+    <li><strong>Fallback Channel:</strong> Physical Letter via PL API (if email/phone unavailable or SNP API fails)</li>
+    <li><strong>Physical Letter Trigger:</strong> Event type = <code>LD</code> and free text = <code>PL</code></li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 3. REQUIREMENTS ==================== -->
+  <h1 id="requirements">3. Requirements</h1>
+
+  <h2 id="func-req">3.1 Functional Requirements</h2>
+
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Requirement</th><th>Priority</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>FR-01</td><td>Migrate dormancy status determination logic from Finacle to CBSL 2.0</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-02</td><td>Implement non-financial transaction consideration in eligibility criteria (NB/MB, ATM, BCIF KYC, Embark, 811)</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-03</td><td>Support dual status transitions: Active &rarr; Inactive (12 months), Inactive &rarr; Dormant (24 months)</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-04</td><td>Generate intimation letters/SMS at 9, 11, 21, 23 month milestones</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-05</td><td>Update account status in Finacle Core post-validation</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-06</td><td>Maintain same-day processing for ~500K accounts monthly</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-07</td><td>Process both financial and non-financial transactions from 7 data sources</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-08</td><td>Support Physical Letter fallback when SNP API is unavailable</td><td><span class="severity-medium">P1</span></td></tr>
+      <tr><td>FR-09</td><td>Implement T-1 validation: verify account status consistency before state change</td><td><span class="severity-high">P0</span></td></tr>
+      <tr><td>FR-10</td><td>Full audit trail logging for regulatory compliance and reconciliation</td><td><span class="severity-high">P0</span></td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="nfr">3.2 Non-Functional Requirements</h2>
+
+  <table>
+    <thead>
+      <tr><th>Requirement</th><th>Target</th><th>Measurement</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Availability</strong></td><td>99.9% monthly uptime</td><td>Monthly uptime percentage</td></tr>
+      <tr><td><strong>End-to-End Latency</strong></td><td>P99 &lt; 5 minutes (full batch)</td><td>Complete batch completion time</td></tr>
+      <tr><td><strong>API Response Time</strong></td><td>P99 &lt; 200ms per call</td><td>Per individual API call</td></tr>
+      <tr><td><strong>Data Accuracy</strong></td><td>100%</td><td>Correct determination for all eligible accounts</td></tr>
+      <tr><td><strong>Notification Delivery</strong></td><td>99%</td><td>Successful delivery via primary/fallback channels</td></tr>
+      <tr><td><strong>Scalability</strong></td><td>Support 500K accounts/month with auto-scaling</td><td>Peak throughput under load</td></tr>
+      <tr><td><strong>Maintainability</strong></td><td>Modular architecture supporting future extensions</td><td>Component coupling metrics</td></tr>
+      <tr><td><strong>Compliance</strong></td><td>Full audit trail for regulatory verification</td><td>Audit completeness percentage</td></tr>
+      <tr><td><strong>RTO (Recovery Time)</strong></td><td>&lt; 1 hour</td><td>Time to restore service after failure</td></tr>
+      <tr><td><strong>RPO (Recovery Point)</strong></td><td>&lt; 15 minutes</td><td>Maximum acceptable data loss</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="out-of-scope">3.3 Out of Scope</h2>
+  <ul>
+    <li>Reactivation of dormant accounts (separate requirement &amp; project)</li>
+    <li>Integration with credit scoring systems</li>
+    <li>Machine learning-based dormancy prediction</li>
+    <li>Real-time streaming dormancy detection (current scope is batch-based)</li>
+  </ul>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 4. ARCHITECTURE TENETS ==================== -->
+  <h1 id="tenets">4. Architecture Tenets &amp; Principles</h1>
+
+  <table>
+    <thead>
+      <tr><th>Tenet</th><th>Description</th><th>Rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Regulatory Compliance First</strong></td>
+        <td>Architecture must meet RBI requirements by design, not as an afterthought</td>
+        <td>Non-compliance carries regulatory risk and penalties</td>
+      </tr>
+      <tr>
+        <td><strong>Event-Driven Processing</strong></td>
+        <td>Async processing via SQS for scalability and resilience</td>
+        <td>Decouples producers from consumers, enables independent scaling</td>
+      </tr>
+      <tr>
+        <td><strong>Modular &amp; Extensible</strong></td>
+        <td>Support additional status changes and communication channels in future</td>
+        <td>Business rules change frequently; architecture should accommodate</td>
+      </tr>
+      <tr>
+        <td><strong>Fault-Tolerant</strong></td>
+        <td>Automatic retries, fallback mechanisms, DLQ for failed messages</td>
+        <td>Financial system requires zero data loss</td>
+      </tr>
+      <tr>
+        <td><strong>Zero Manual Intervention</strong></td>
+        <td>Fully automated processing with minimal operational overhead</td>
+        <td>Reduces human error and operational cost</td>
+      </tr>
+      <tr>
+        <td><strong>Cost-Optimized</strong></td>
+        <td>Leverage managed services (AWS SQS, DynamoDB) to minimize infrastructure management</td>
+        <td>Focus engineering effort on business logic, not infrastructure</td>
+      </tr>
+      <tr>
+        <td><strong>Observable</strong></td>
+        <td>Comprehensive monitoring, metrics, alerting, and distributed tracing</td>
+        <td>Critical for SLA compliance and issue diagnosis in production</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 5. HIGH-LEVEL DESIGN ==================== -->
+  <h1 id="hld">5. High-Level Design (HLD)</h1>
+
+  <h2 id="context-diagram">5.1 System Context Diagram</h2>
+  <p>The System Context Diagram shows the Dormancy Management System and all external systems it interacts with.</p>
+
+  <div class="diagram-container">
+    <div class="diagram-title">System Context Diagram</div>
+    <div class="mermaid">
+flowchart TB
+    subgraph DataSources["📊 Data Sources (7)"]
+        DWH["🗄️ DWH\nFinacle Daily Extract\n(Financial Txns)"]
+        NBMB["💻 NB/MB Logs\n(Digital Channel\nLogin Records)"]
+        FIN["🏦 Finacle Core\n(Direct Financial\nTxn Queries)"]
+        BCIF["📋 BCIF System\n(KYC & Customer\nInfo)"]
+        ATM["🏧 ATM Network\n(ATM Txn Logs)"]
+        EMBARK["💰 Embark System\n(Wealth Mgmt\nTxns)"]
+        E811["📱 811 Service\n(Third-Party\nTxn Records)"]
+    end
+
+    subgraph CBSL["🔧 CBSL 2.0 - Dormancy Management System"]
+        DMS["Dormancy &\nInactivation\nManagement\nSystem"]
+    end
+
+    subgraph TargetSystems["🎯 Target Systems"]
+        FINCORE["🏦 Finacle Core\n(Account Status\nUpdates)"]
+        SNPAPI["📧 SNP API\n(SMS/Email\nNotifications)"]
+        PLAPI["✉️ Physical Letter API\n(Fallback\nCommunication)"]
+    end
+
+    DWH --> DMS
+    NBMB --> DMS
+    FIN --> DMS
+    BCIF --> DMS
+    ATM --> DMS
+    EMBARK --> DMS
+    E811 --> DMS
+
+    DMS --> FINCORE
+    DMS --> SNPAPI
+    DMS --> PLAPI
+
+    style CBSL fill:#ebf8ff,stroke:#3182ce,stroke-width:2px
+    style DataSources fill:#f0fff4,stroke:#276749
+    style TargetSystems fill:#fff5f5,stroke:#c53030
+    style DMS fill:#3182ce,color:#fff,stroke:#2b6cb0
+    </div>
+    <div class="diagram-caption">Figure 5.1 &mdash; System Context: 7 data sources feed into the Dormancy Management System, which outputs to 3 target systems</div>
+  </div>
+
+  <h2 id="arch-overview">5.2 Architecture Overview</h2>
+
+  <p>
+    The solution implements a <strong>layered, event-driven microservices architecture</strong> with clear separation between data ingestion, processing, and notification layers. The architecture leverages AWS managed services for messaging and state management, Apache Iceberg for data warehousing, and Kong API Gateway for external service integration.
+  </p>
+
+  <div class="diagram-container">
+    <div class="diagram-title">High-Level Architecture Diagram</div>
+    <div class="mermaid">
+flowchart TB
+    subgraph Sources["🗄️ DATA SOURCES"]
+        direction LR
+        S1["DWH"] ~~~ S2["NB/MB"] ~~~ S3["Finacle"] ~~~ S4["BCIF"] ~~~ S5["ATM"] ~~~ S6["Embark"] ~~~ S7["811"]
+    end
+
+    subgraph Ingestion["📥 DATA INGESTION LAYER"]
+        DEX["DEX Mart\nCreation\n(Data Aggregation)"]
+        ICE["🧊 Apache Iceberg\n(Data Lake Table)"]
+    end
+
+    subgraph Orchestration["⏱️ ORCHESTRATION LAYER"]
+        DS["🐬 Dolphin Scheduler\n(Batch Orchestration)"]
+    end
+
+    subgraph Processing["⚙️ PROCESSING LAYER (Spring Boot Microservices)"]
+        direction LR
+        C1["Consumer 1\n📨 Intimation &\nPhysical Letter"]
+        C2["Consumer 2\n🔄 Active→Inactive\nConversion"]
+        C3["Consumer 3\n🔄 Active→Dormant\nConversion"]
+    end
+
+    subgraph Messaging["📬 MESSAGING LAYER"]
+        direction LR
+        SQS1["🟠 Amazon SQS\nIntimation Queue"]
+        SQS2["🟠 Amazon SQS\nInactivation Queue"]
+        SQS3["🟠 Amazon SQS\nDormancy Queue"]
+    end
+
+    subgraph Processors["⚡ PROCESSOR LAYER (Spring Boot Microservices)"]
+        direction LR
+        P1["Processor 1\n📧 SNP/PL API\nHandler"]
+        P2["Processor 2\n🔄 Inactivation\nHandler"]
+        P3["Processor 3\n🔄 Dormancy\nHandler"]
+    end
+
+    subgraph Gateway["🌐 API GATEWAY"]
+        KONG["🦍 Kong\nAPI Gateway\n(Rate Limiting, Auth)"]
+    end
+
+    subgraph External["🎯 EXTERNAL SYSTEMS"]
+        direction LR
+        ACCTINQ["Account Detail\nInquiry API"]
+        SNPAPI2["SNP API\n(SMS/Email)"]
+        PLAPI2["PL API\n(Physical Letter)"]
+        INACTAPI["Inactivation API\n(Finacle)"]
+        DORMAPI["Dormant API\n(Finacle)"]
+    end
+
+    subgraph State["💾 STATE MANAGEMENT"]
+        DYNAMO["🔵 Amazon DynamoDB\n(Processing State &\nAudit Trail)"]
+    end
+
+    Sources --> DEX
+    DEX --> ICE
+    DS -->|"Poll & Trigger Jobs"| ICE
+    DS --> C1
+    DS --> C2
+    DS --> C3
+    C1 --> SQS1
+    C2 --> SQS2
+    C3 --> SQS3
+    SQS1 --> P1
+    SQS2 --> P2
+    SQS3 --> P3
+    P1 --> KONG
+    P2 --> KONG
+    P3 --> KONG
+    KONG --> ACCTINQ
+    KONG --> SNPAPI2
+    KONG --> PLAPI2
+    KONG --> INACTAPI
+    KONG --> DORMAPI
+    P1 --> DYNAMO
+    P2 --> DYNAMO
+    P3 --> DYNAMO
+
+    style Sources fill:#f0fff4,stroke:#276749
+    style Ingestion fill:#e6fffa,stroke:#0fb5ae
+    style Orchestration fill:#edf2f7,stroke:#4a5568
+    style Processing fill:#ebf8ff,stroke:#3182ce
+    style Messaging fill:#fffaf0,stroke:#dd6b20
+    style Processors fill:#faf5ff,stroke:#6b46c1
+    style Gateway fill:#e2e8f0,stroke:#003459
+    style External fill:#fff5f5,stroke:#c53030
+    style State fill:#ebf4ff,stroke:#3b48cc
+    </div>
+    <div class="diagram-caption">Figure 5.2 &mdash; High-Level Architecture: Event-driven microservices with layered separation of concerns</div>
+  </div>
+
+  <h3>Data Flow Summary</h3>
+  <p>
+    <code>Multi-source data consolidation</code> &rarr; <code>Iceberg storage</code> &rarr; <code>Scheduled batch processing</code> &rarr; <code>Eligibility determination</code> &rarr; <code>SQS event distribution</code> &rarr; <code>T-1 validation</code> &rarr; <code>Account status update / Notification dispatch</code> &rarr; <code>Audit logging</code>
+  </p>
+
+  <h2 id="component-diagram">5.3 Component Architecture</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Component Architecture with AWS Services</div>
+    <div class="arch-diagram">
+
+      <!-- Data Layer -->
+      <div class="layer-label">Data Ingestion Layer</div>
+      <div class="arch-row">
+        <div class="arch-box box-source">DWH<small>Financial Txns</small></div>
+        <div class="arch-box box-source">NB/MB Logs<small>Digital Login</small></div>
+        <div class="arch-box box-source">Finacle Core<small>Direct Queries</small></div>
+        <div class="arch-box box-source">BCIF<small>KYC Data</small></div>
+        <div class="arch-box box-source">ATM Network<small>ATM Logs</small></div>
+        <div class="arch-box box-source">Embark<small>Wealth Mgmt</small></div>
+        <div class="arch-box box-source">811 Service<small>Third-Party Txns</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <div class="arch-row">
+        <div class="arch-box box-java">DEX Mart<small>Data Aggregation Job</small></div>
+        <span style="font-size:24px; color:var(--gray-400);">&rarr;</span>
+        <div class="arch-box box-iceberg">Apache Iceberg<small>Data Lake Tables</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <!-- Orchestration Layer -->
+      <div class="layer-label">Orchestration Layer</div>
+      <div class="arch-row">
+        <div class="arch-box box-dolphin">Dolphin Scheduler<small>Batch Orchestration (BOD/EOD)</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <!-- Processing Layer -->
+      <div class="layer-label">Consumer Layer (Spring Boot)</div>
+      <div class="arch-row">
+        <div class="arch-box box-java">Consumer 1<small>Intimation + PL Records</small></div>
+        <div class="arch-box box-java">Consumer 2<small>Active &rarr; Inactive Records</small></div>
+        <div class="arch-box box-java">Consumer 3<small>Active &rarr; Dormant Records</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <!-- Messaging Layer -->
+      <div class="layer-label">Messaging Layer</div>
+      <div class="arch-row">
+        <div class="arch-box box-aws-sqs">Amazon SQS<small>Intimation Queue</small></div>
+        <div class="arch-box box-aws-sqs">Amazon SQS<small>Inactivation Queue</small></div>
+        <div class="arch-box box-aws-sqs">Amazon SQS<small>Dormancy Queue</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <!-- Processor Layer -->
+      <div class="layer-label">Processor Layer (Spring Boot)</div>
+      <div class="arch-row">
+        <div class="arch-box box-java">Processor 1<small>SNP/PL API Handler</small></div>
+        <div class="arch-box box-java">Processor 2<small>Inactivation Handler</small></div>
+        <div class="arch-box box-java">Processor 3<small>Dormancy Handler</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <!-- Gateway Layer -->
+      <div class="layer-label">API Gateway &amp; External Integration</div>
+      <div class="arch-row">
+        <div class="arch-box box-kong">Kong API Gateway<small>Rate Limiting / Auth / Routing</small></div>
+      </div>
+
+      <div class="arrow-down"></div>
+
+      <div class="arch-row">
+        <div class="arch-box box-finacle">Account Detail<br>Inquiry API<small>T-1 Validation</small></div>
+        <div class="arch-box box-snp">SNP API<small>SMS / Email</small></div>
+        <div class="arch-box box-snp">PL API<small>Physical Letter</small></div>
+        <div class="arch-box box-finacle">Inactivation API<small>Finacle Status Update</small></div>
+        <div class="arch-box box-finacle">Dormant API<small>Finacle Status Update</small></div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Cross-cutting -->
+      <div class="layer-label">Cross-Cutting Concerns</div>
+      <div class="arch-row">
+        <div class="arch-box box-aws-dynamo">Amazon DynamoDB<small>State Mgmt &amp; Audit Trail</small></div>
+        <div class="arch-box box-monitoring">CloudWatch<small>Logs &amp; Metrics</small></div>
+        <div class="arch-box box-monitoring">OpenTelemetry<small>Distributed Tracing</small></div>
+        <div class="arch-box box-monitoring">Prometheus<small>Custom Metrics</small></div>
+      </div>
+    </div>
+    <div class="diagram-caption">Figure 5.3 &mdash; Component Architecture: Visual mapping of all services and tools used</div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 6. DETAILED DESIGN ==================== -->
+  <h1 id="detailed-design">6. Detailed Design</h1>
+
+  <h2 id="data-flow">6.1 End-to-End Data Flow</h2>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-step-num">1</div>
+      <div class="flow-step-content">
+        <h4>Data Aggregation (DEX Mart Creation)</h4>
+        <p>Data is pulled from all 7 sources (DWH, NB/MB, Finacle Core, BCIF, ATM, Embark, 811) and consolidated into the DEX Mart. The aggregation job computes the <strong>reference date</strong> (maximum of last activity across all channels) for each account.</p>
+        <span class="tech-badge tech-badge-java">Java 17</span>
+        <span class="tech-badge tech-badge-java">Spring Boot 3.4.6</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">2</div>
+      <div class="flow-step-content">
+        <h4>Iceberg Table Population</h4>
+        <p>Consolidated data from DEX Mart is written to Apache Iceberg tables in the data lake. Iceberg provides ACID transactions, time-travel queries, and partition evolution for efficient batch reads.</p>
+        <span class="tech-badge" style="background:#e0f7fa; border-color:#00acc1; color:#006064;">Apache Iceberg</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">3</div>
+      <div class="flow-step-content">
+        <h4>Dolphin Scheduler Triggers Batch Jobs</h4>
+        <p>Dolphin Scheduler polls Iceberg for data readiness and triggers 4 jobs:
+          (a) OnDemand API for 9/11/21/23 month intimation &amp; physical letter,
+          (b) Active-Inactive conversion job,
+          (c) Active-Dormant conversion job.</p>
+        <span class="tech-badge">Dolphin Scheduler</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">4</div>
+      <div class="flow-step-content">
+        <h4>Consumers Fetch Eligible Records from Views</h4>
+        <p>Three parallel consumers read from Iceberg views to fetch eligible records:
+          Consumer 1 (intimation records), Consumer 2 (inactive-eligible), Consumer 3 (dormant-eligible).
+          Each consumer creates SQS messages with the account details and event metadata.</p>
+        <span class="tech-badge tech-badge-java">Spring Boot Consumer</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">5</div>
+      <div class="flow-step-content">
+        <h4>SQS Queues Distribute Events</h4>
+        <p>Three dedicated Amazon SQS queues receive messages from respective consumers. Each queue has a corresponding Dead Letter Queue (DLQ) for failed message handling. Messages include account ID, event type, free text, and processing metadata.</p>
+        <span class="tech-badge tech-badge-aws">Amazon SQS</span>
+        <span class="tech-badge tech-badge-aws">SQS DLQ</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">6</div>
+      <div class="flow-step-content">
+        <h4>Processors Execute Business Logic</h4>
+        <p>Processors pull messages from SQS and execute business logic based on event type:
+          <strong>Processor 1:</strong> Routes to SNP API or PL API based on event type and free text.
+          <strong>Processor 2:</strong> Calls Account Inactivation API.
+          <strong>Processor 3:</strong> Calls Account Dormant API.
+          All processors first call Account Detail Inquiry API for T-1 validation.</p>
+        <span class="tech-badge tech-badge-java">Spring Boot Processor</span>
+        <span class="tech-badge" style="background:#e8eaf6; border-color:#5c6bc0; color:#283593;">Kong Gateway</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">7</div>
+      <div class="flow-step-content">
+        <h4>T-1 Validation &amp; API Execution via Kong</h4>
+        <p>Before executing any status change or notification, each processor calls the <strong>Account Detail Inquiry API</strong> through Kong to fetch the latest account status and last transaction date. If the T-1 data status matches the current account detail API response, the processor proceeds with the action. Kong provides rate limiting, authentication, and request routing.</p>
+        <span class="tech-badge" style="background:#e8eaf6; border-color:#5c6bc0; color:#283593;">Kong API Gateway</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">8</div>
+      <div class="flow-step-content">
+        <h4>Post-Action Validation &amp; Notification</h4>
+        <p>After status change APIs are called, the system calls Account Detail Inquiry API again to verify the status actually changed. If changed:
+          &bull; Call SNP API for Inactive intimation (if status changed to Inactive)
+          &bull; Call SNP API for Dormant intimation (if status changed to Dormant)
+          &bull; Call PL API for Physical Letter (if event type is LD and free text is PL)</p>
+        <span class="tech-badge tech-badge-aws">Amazon DynamoDB</span>
+      </div>
+    </div>
+
+    <div class="flow-step">
+      <div class="flow-step-num">9</div>
+      <div class="flow-step-content">
+        <h4>State Persistence &amp; Audit Logging</h4>
+        <p>Processing state and audit events are persisted in DynamoDB. Every action (status check, API call, status change, notification sent) is logged with timestamps for regulatory compliance and reconciliation.</p>
+        <span class="tech-badge tech-badge-aws">Amazon DynamoDB</span>
+        <span class="tech-badge">CloudWatch Logs</span>
+      </div>
+    </div>
+  </div>
+
+  <h2 id="seq-intimation">6.2 Sequence Diagram: Intimation Flow</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Sequence Diagram &mdash; Intimation / Physical Letter Flow (9/11/21/23 Months)</div>
+    <div class="mermaid">
+sequenceDiagram
+    participant DS as 🐬 Dolphin Scheduler
+    participant ICE as 🧊 Iceberg View
+    participant C1 as Consumer 1<br/>(Spring Boot)
+    participant SQS1 as 🟠 Amazon SQS<br/>(Intimation Queue)
+    participant P1 as Processor 1<br/>(Spring Boot)
+    participant KONG as 🦍 Kong Gateway
+    participant ACCT as Account Detail<br/>Inquiry API
+    participant SNP as 📧 SNP API
+    participant PL as ✉️ PL API
+    participant DB as 🔵 DynamoDB
+
+    DS->>C1: Trigger Intimation Job
+    C1->>ICE: Fetch eligible records for<br/>9/11/21/23 month milestones
+    ICE-->>C1: Return eligible account records
+
+    loop For each eligible record
+        C1->>SQS1: Publish message<br/>{accountId, eventType, freeText}
+    end
+
+    SQS1->>P1: Poll message
+    P1->>KONG: Call Account Detail Inquiry API
+    KONG->>ACCT: Forward request
+    ACCT-->>KONG: Return latest status,<br/>last txn date, status date
+    KONG-->>P1: Response
+
+    P1->>P1: Validate T-1 data status<br/>matches account detail API status
+
+    alt Event Type = "L" AND Free Text = "PL"
+        P1->>KONG: Call PL API (Physical Letter)
+        KONG->>PL: Send physical letter request
+        PL-->>KONG: Acknowledgement
+        KONG-->>P1: Response
+    else Event Type = "L" AND Free Text = null
+        P1->>KONG: Call SNP API (SMS/Email)
+        KONG->>SNP: Send notification request
+        SNP-->>KONG: Delivery status
+        KONG-->>P1: Response
+    end
+
+    P1->>DB: Log audit event<br/>{action, timestamp, result}
+    P1->>SQS1: Delete processed message
+    </div>
+    <div class="diagram-caption">Figure 6.1 &mdash; Detailed sequence for customer intimation at regulatory milestones</div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <h2 id="seq-status">6.3 Sequence Diagram: Account Status Change Flow</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Sequence Diagram &mdash; Active &rarr; Inactive Status Change (12 Months)</div>
+    <div class="mermaid">
+sequenceDiagram
+    participant DS as 🐬 Dolphin Scheduler
+    participant ICE as 🧊 Iceberg View
+    participant C2 as Consumer 2<br/>(Spring Boot)
+    participant SQS2 as 🟠 Amazon SQS<br/>(Inactivation Queue)
+    participant P2 as Processor 2<br/>(Spring Boot)
+    participant KONG as 🦍 Kong Gateway
+    participant ACCT as Account Detail<br/>Inquiry API
+    participant INACT as Inactivation API<br/>(Finacle)
+    participant SNP as 📧 SNP API
+    participant DB as 🔵 DynamoDB
+
+    DS->>C2: Trigger Active→Inactive Job
+    C2->>ICE: Fetch eligible records<br/>(accounts inactive ≥12 months)
+    ICE-->>C2: Return eligible records
+
+    loop For each eligible record
+        C2->>SQS2: Publish message<br/>{accountId, eventType: "INACTIVATION"}
+    end
+
+    SQS2->>P2: Poll message
+    P2->>KONG: Call Account Detail Inquiry API
+    KONG->>ACCT: Forward request
+    ACCT-->>KONG: Return current status,<br/>last txn date
+    KONG-->>P2: Response
+
+    P2->>P2: Validate: T-1 status = ACTIVE<br/>AND last activity ≥ 12 months ago
+
+    alt Validation Passed
+        P2->>KONG: Call Account Inactivation API
+        KONG->>INACT: Update status to INACTIVE
+        INACT-->>KONG: Confirmation
+        KONG-->>P2: Response
+
+        P2->>KONG: Call Account Detail Inquiry API<br/>(Post-change verification)
+        KONG->>ACCT: Verify new status
+        ACCT-->>KONG: Return updated status
+        KONG-->>P2: Status = INACTIVE confirmed
+
+        P2->>KONG: Call SNP API<br/>(Inactive intimation to customer)
+        KONG->>SNP: Send inactivation notification
+        SNP-->>KONG: Delivery confirmation
+        KONG-->>P2: Response
+
+        P2->>DB: Log: status changed,<br/>notification sent
+    else Validation Failed
+        P2->>DB: Log: skipped<br/>(status mismatch or recent activity)
+    end
+
+    P2->>SQS2: Delete processed message
+    </div>
+    <div class="diagram-caption">Figure 6.2 &mdash; Active to Inactive status change with T-1 validation and post-change verification</div>
+  </div>
+
+  <div class="callout callout-info">
+    <div class="callout-title">Note: Dormancy Flow (Active &rarr; Dormant)</div>
+    <p>The Active &rarr; Dormant flow (Consumer 3 / Processor 3 / SQS Dormancy Queue) follows an identical pattern to the Inactivation flow above, but targets accounts inactive for &ge;24 months and calls the <strong>Dormant API</strong> instead of the Inactivation API.</p>
+  </div>
+
+  <h2 id="component-details">6.4 Component Specifications</h2>
+
+  <h3>6.4.1 DEX Mart Creation Job</h3>
+  <table>
+    <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>Purpose</td><td>Aggregate data from 7 sources into a unified data mart</td></tr>
+      <tr><td>Technology</td><td>Java 17, Spring Boot 3.4.6</td></tr>
+      <tr><td>Input</td><td>Raw transaction data from DWH, NB/MB, Finacle, BCIF, ATM, Embark, 811</td></tr>
+      <tr><td>Output</td><td>Consolidated records in Apache Iceberg tables</td></tr>
+      <tr><td>Key Logic</td><td>Compute <code>reference_date = MAX(last_financial_txn, last_nb_mb_login, last_atm_txn, last_bcif_kyc_update, last_embark_txn, last_811_txn)</code></td></tr>
+      <tr><td>Schedule</td><td>Daily via Dolphin Scheduler</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.4.2 Consumer Services</h3>
+  <table>
+    <thead><tr><th>Consumer</th><th>Source</th><th>Output Queue</th><th>Selection Criteria</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Consumer 1</strong> (Intimation &amp; PL)</td><td>Iceberg View</td><td>SQS Intimation Queue</td><td>Accounts at 9, 11, 21, or 23 month milestones from reference date</td></tr>
+      <tr><td><strong>Consumer 2</strong> (Active &rarr; Inactive)</td><td>Iceberg View</td><td>SQS Inactivation Queue</td><td>Active accounts where reference_date &ge; 12 months ago</td></tr>
+      <tr><td><strong>Consumer 3</strong> (Inactive &rarr; Dormant)</td><td>Iceberg View</td><td>SQS Dormancy Queue</td><td>Inactive accounts where reference_date &ge; 24 months ago</td></tr>
+    </tbody>
+  </table>
+
+  <h3>6.4.3 Processor Services</h3>
+  <table>
+    <thead><tr><th>Processor</th><th>Input Queue</th><th>T-1 Validation</th><th>Primary Action</th><th>Post-Action</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Processor 1</strong> (SNP/PL Handler)</td>
+        <td>SQS Intimation Queue</td>
+        <td>Verify T-1 status matches Account Detail API</td>
+        <td>Call SNP API (if free_text = null) or PL API (if free_text = "PL")</td>
+        <td>Log audit event in DynamoDB</td>
+      </tr>
+      <tr>
+        <td><strong>Processor 2</strong> (Inactivation Handler)</td>
+        <td>SQS Inactivation Queue</td>
+        <td>Verify status = ACTIVE and last_activity &ge; 12 months</td>
+        <td>Call Account Inactivation API via Kong</td>
+        <td>Verify status change, send SNP notification, log audit</td>
+      </tr>
+      <tr>
+        <td><strong>Processor 3</strong> (Dormancy Handler)</td>
+        <td>SQS Dormancy Queue</td>
+        <td>Verify status = INACTIVE and last_activity &ge; 24 months</td>
+        <td>Call Account Dormant API via Kong</td>
+        <td>Verify status change, send SNP notification, log audit</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>6.4.4 T-1 Validation Pattern</h3>
+  <div class="callout callout-success">
+    <div class="callout-title">Design Pattern: T-1 Validation</div>
+    <p>
+      Before any status change or notification is executed, the processor performs a <strong>T-1 validation</strong>:
+    </p>
+    <ol>
+      <li>Call <strong>Account Detail Inquiry API</strong> to fetch the real-time account status, last transaction date, and account status date</li>
+      <li>Compare the T-1 batch data (from Iceberg) with the real-time API response</li>
+      <li>Only proceed if the statuses match &mdash; this prevents race conditions where an account may have had recent activity between batch computation and processing</li>
+      <li>After status change, call the Inquiry API again to <strong>verify</strong> the change was applied successfully</li>
+    </ol>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 7. TECHNOLOGY STACK ==================== -->
+  <h1 id="tech-stack">7. Technology Stack</h1>
+
+  <table>
+    <thead>
+      <tr><th>Layer</th><th>Technology</th><th>Version</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Language &amp; Framework</strong></td>
+        <td>Java + Spring Boot</td>
+        <td>Java 17, Spring Boot 3.4.6</td>
+        <td>Core application framework for all microservices</td>
+      </tr>
+      <tr>
+        <td><strong>Messaging</strong></td>
+        <td>Amazon SQS</td>
+        <td>Latest</td>
+        <td>Asynchronous message processing with DLQ support</td>
+      </tr>
+      <tr>
+        <td><strong>State Management</strong></td>
+        <td>Amazon DynamoDB</td>
+        <td>Latest</td>
+        <td>Processing state, audit trail, idempotency keys</td>
+      </tr>
+      <tr>
+        <td><strong>Data Warehouse</strong></td>
+        <td>Apache Iceberg</td>
+        <td>Latest</td>
+        <td>ACID-compliant data lake tables for batch reads</td>
+      </tr>
+      <tr>
+        <td><strong>Scheduling</strong></td>
+        <td>Dolphin Scheduler</td>
+        <td>Latest</td>
+        <td>Batch orchestration and job dependency management</td>
+      </tr>
+      <tr>
+        <td><strong>API Gateway</strong></td>
+        <td>Kong</td>
+        <td>Latest</td>
+        <td>Rate limiting, authentication, routing for external APIs</td>
+      </tr>
+      <tr>
+        <td><strong>Containerization</strong></td>
+        <td>Docker</td>
+        <td>Latest</td>
+        <td>Application containerization</td>
+      </tr>
+      <tr>
+        <td><strong>Orchestration</strong></td>
+        <td>Kubernetes</td>
+        <td>Latest</td>
+        <td>Container orchestration and auto-scaling</td>
+      </tr>
+      <tr>
+        <td><strong>Monitoring</strong></td>
+        <td>CloudWatch + Prometheus</td>
+        <td>Latest</td>
+        <td>Metrics collection, dashboards, alerting</td>
+      </tr>
+      <tr>
+        <td><strong>Distributed Tracing</strong></td>
+        <td>OpenTelemetry</td>
+        <td>Latest</td>
+        <td>End-to-end request tracing across microservices</td>
+      </tr>
+      <tr>
+        <td><strong>Cloud Provider</strong></td>
+        <td>AWS</td>
+        <td>&mdash;</td>
+        <td>SQS, DynamoDB, CloudWatch</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Technology Stack Visual Map</div>
+    <div class="mermaid">
+block-beta
+    columns 4
+    block:app["Application Layer"]:4
+      Java["☕ Java 17"] SpringBoot["🍃 Spring Boot 3.4.6"]
+    end
+    block:msg["Messaging & State"]:4
+      SQS["🟠 Amazon SQS"] DynamoDB["🔵 Amazon DynamoDB"]
+    end
+    block:data["Data Layer"]:4
+      Iceberg["🧊 Apache Iceberg"] DEX["DEX Mart"]
+    end
+    block:infra["Infrastructure"]:4
+      Docker["🐳 Docker"] K8s["☸ Kubernetes"] Dolphin["🐬 Dolphin Scheduler"] Kong["🦍 Kong Gateway"]
+    end
+    block:obs["Observability"]:4
+      CW["☁ CloudWatch"] Prom["📊 Prometheus"] OTel["🔭 OpenTelemetry"]
+    end
+
+    style app fill:#ffebee,stroke:#e53e3e
+    style msg fill:#fff3e0,stroke:#ff9800
+    style data fill:#e0f7fa,stroke:#00acc1
+    style infra fill:#e3f2fd,stroke:#1976d2
+    style obs fill:#f3e5f5,stroke:#7b1fa2
+    </div>
+    <div class="diagram-caption">Figure 7.1 &mdash; Technology stack organized by architectural layer</div>
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 8. INTEGRATION POINTS ==================== -->
+  <h1 id="integration">8. Integration Points &amp; API Contracts</h1>
+
+  <h2>8.1 Data Sources (7 Total)</h2>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Source System</th><th>Data Type</th><th>Integration Method</th><th>Frequency</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>1</td><td>DWH (Finacle Daily Extract)</td><td>Financial transactions &amp; account master data</td><td>Batch ETL via DEX Mart</td><td>Daily</td></tr>
+      <tr><td>2</td><td>NB/MB Logs</td><td>Digital channel login records</td><td>Batch ETL via DEX Mart</td><td>Daily</td></tr>
+      <tr><td>3</td><td>Finacle Core</td><td>Direct financial transaction queries</td><td>API (Account Detail Inquiry)</td><td>Real-time</td></tr>
+      <tr><td>4</td><td>BCIF System</td><td>KYC &amp; customer information</td><td>Batch ETL via DEX Mart</td><td>Daily</td></tr>
+      <tr><td>5</td><td>ATM Network</td><td>ATM transaction logs</td><td>Batch ETL via DEX Mart</td><td>Daily</td></tr>
+      <tr><td>6</td><td>Embark System</td><td>Wealth management transactions</td><td>Batch ETL via DEX Mart</td><td>Daily</td></tr>
+      <tr><td>7</td><td>811 Service</td><td>Third-party transaction records</td><td>Batch ETL via DEX Mart</td><td>Daily</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.2 Target Systems</h2>
+  <table>
+    <thead>
+      <tr><th>Target System</th><th>Purpose</th><th>Protocol</th><th>Via</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>Account Detail Inquiry API</strong></td><td>Fetch latest account status, last txn date, status date</td><td>REST/HTTPS</td><td>Kong Gateway</td></tr>
+      <tr><td><strong>Account Inactivation API</strong></td><td>Change account status: ACTIVE &rarr; INACTIVE</td><td>REST/HTTPS</td><td>Kong Gateway</td></tr>
+      <tr><td><strong>Account Dormant API</strong></td><td>Change account status: INACTIVE &rarr; DORMANT</td><td>REST/HTTPS</td><td>Kong Gateway</td></tr>
+      <tr><td><strong>SNP API</strong></td><td>Send SMS/Email notifications to customers</td><td>REST/HTTPS</td><td>Kong Gateway</td></tr>
+      <tr><td><strong>Physical Letter (PL) API</strong></td><td>Send physical letter (fallback channel)</td><td>REST/HTTPS</td><td>Kong Gateway</td></tr>
+    </tbody>
+  </table>
+
+  <h2>8.3 API Contract Specifications</h2>
+
+  <h3>8.3.1 SQS Message Schema (Intimation Queue)</h3>
+  <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; border: 1px solid var(--gray-200); font-family: 'Fira Code', monospace; font-size: 12px; margin: 15px 0; white-space: pre; overflow-x: auto;">
+{
+  "messageId": "uuid",
+  "accountId": "string",
+  "customerId": "string",
+  "eventType": "L",              // L = Letter/Intimation, LD = Letter with Physical
+  "freeText": "PL" | null,      // PL = Physical Letter required
+  "milestoneMonth": 9 | 11 | 21 | 23,
+  "referenceDate": "2025-07-12",
+  "accountStatus": "ACTIVE" | "INACTIVE",
+  "contactEmail": "string | null",
+  "contactPhone": "string | null",
+  "timestamp": "2026-04-12T10:30:00Z",
+  "retryCount": 0
+}
+  </div>
+
+  <h3>8.3.2 SQS Message Schema (Inactivation / Dormancy Queue)</h3>
+  <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; border: 1px solid var(--gray-200); font-family: 'Fira Code', monospace; font-size: 12px; margin: 15px 0; white-space: pre; overflow-x: auto;">
+{
+  "messageId": "uuid",
+  "accountId": "string",
+  "customerId": "string",
+  "eventType": "INACTIVATION" | "DORMANCY",
+  "currentStatus": "ACTIVE" | "INACTIVE",
+  "targetStatus": "INACTIVE" | "DORMANT",
+  "referenceDate": "2025-04-12",
+  "lastActivityDate": "2025-04-10",
+  "monthsSinceActivity": 12 | 24,
+  "timestamp": "2026-04-12T10:30:00Z",
+  "retryCount": 0
+}
+  </div>
+
+  <h3>8.3.3 DynamoDB Audit Record Schema</h3>
+  <div style="background: var(--gray-50); padding: 15px; border-radius: 8px; border: 1px solid var(--gray-200); font-family: 'Fira Code', monospace; font-size: 12px; margin: 15px 0; white-space: pre; overflow-x: auto;">
+{
+  "PK": "ACCOUNT#<accountId>",
+  "SK": "AUDIT#<timestamp>#<action>",
+  "accountId": "string",
+  "action": "INTIMATION_SENT" | "STATUS_CHECK" | "INACTIVATION" | "DORMANCY" | "NOTIFICATION",
+  "previousStatus": "ACTIVE" | "INACTIVE",
+  "newStatus": "ACTIVE" | "INACTIVE" | "DORMANT",
+  "channel": "SMS" | "EMAIL" | "PHYSICAL_LETTER",
+  "apiResponse": "SUCCESS" | "FAILURE",
+  "errorDetails": "string | null",
+  "processorId": "string",
+  "batchId": "string",
+  "timestamp": "2026-04-12T10:30:00Z",
+  "ttl": 1744444200        // Auto-expire after 2 years
+}
+  </div>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 9. DATA MODEL ==================== -->
+  <h1 id="data-model">9. Data Model</h1>
+
+  <h2>9.1 Iceberg Table: Account Dormancy Master</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Entity-Relationship Diagram &mdash; Core Data Model</div>
+    <div class="mermaid">
+erDiagram
+    ACCOUNT_DORMANCY_MASTER {
+        string account_id PK
+        string customer_id
+        string account_status
+        date last_financial_txn_date
+        date last_nb_mb_login_date
+        date last_atm_txn_date
+        date last_bcif_kyc_update_date
+        date last_embark_txn_date
+        date last_811_txn_date
+        date reference_date
+        int months_since_last_activity
+        string eligible_action
+        date batch_date
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    PROCESSING_STATE {
+        string account_id PK
+        string batch_id SK
+        string processing_status
+        string processor_id
+        string event_type
+        int retry_count
+        timestamp started_at
+        timestamp completed_at
+        string error_message
+    }
+
+    AUDIT_LOG {
+        string account_id PK
+        string audit_id SK
+        string action
+        string previous_status
+        string new_status
+        string channel
+        string api_response
+        string batch_id
+        timestamp timestamp
+    }
+
+    ACCOUNT_DORMANCY_MASTER ||--o{ PROCESSING_STATE : "processed by"
+    ACCOUNT_DORMANCY_MASTER ||--o{ AUDIT_LOG : "generates"
+    </div>
+    <div class="diagram-caption">Figure 9.1 &mdash; Core data entities and relationships</div>
+  </div>
+
+  <h2>9.2 DynamoDB Table Design</h2>
+
+  <table>
+    <thead>
+      <tr><th>Table</th><th>Partition Key (PK)</th><th>Sort Key (SK)</th><th>GSI</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>dormancy-processing-state</strong></td>
+        <td><code>ACCOUNT#&lt;id&gt;</code></td>
+        <td><code>BATCH#&lt;date&gt;</code></td>
+        <td>GSI1: <code>status-index</code> (status, timestamp)</td>
+        <td>Track processing state per account per batch run</td>
+      </tr>
+      <tr>
+        <td><strong>dormancy-audit-trail</strong></td>
+        <td><code>ACCOUNT#&lt;id&gt;</code></td>
+        <td><code>AUDIT#&lt;timestamp&gt;#&lt;action&gt;</code></td>
+        <td>GSI1: <code>batch-index</code> (batchId, timestamp)</td>
+        <td>Complete audit trail for compliance</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 10. SLA/SLO TARGETS ==================== -->
+  <h1 id="sla">10. SLA / SLO Targets</h1>
+
+  <table>
+    <thead>
+      <tr><th>Metric</th><th>SLO Target</th><th>Measurement Method</th><th>Alerting Threshold</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>System Availability</strong></td><td>99.9%</td><td>Monthly uptime percentage</td><td>&lt; 99.5% &rarr; P1 alert</td></tr>
+      <tr><td><strong>End-to-End Processing</strong></td><td>P99 &lt; 5 minutes</td><td>Complete batch completion time</td><td>&gt; 3 min &rarr; warning, &gt; 5 min &rarr; P2 alert</td></tr>
+      <tr><td><strong>API Response Time</strong></td><td>P99 &lt; 200ms</td><td>Per individual API call latency</td><td>&gt; 150ms &rarr; warning, &gt; 200ms &rarr; P2 alert</td></tr>
+      <tr><td><strong>Data Accuracy</strong></td><td>100%</td><td>Correct determination for all eligible accounts</td><td>Any mismatch &rarr; P1 alert</td></tr>
+      <tr><td><strong>Notification Delivery</strong></td><td>99%</td><td>Successful delivery via primary/fallback</td><td>&lt; 95% &rarr; P2 alert</td></tr>
+      <tr><td><strong>RTO (Recovery Time)</strong></td><td>&lt; 1 hour</td><td>Time to restore service after failure</td><td>&gt; 30 min &rarr; escalation</td></tr>
+      <tr><td><strong>RPO (Recovery Point)</strong></td><td>&lt; 15 minutes</td><td>Maximum acceptable data loss</td><td>DynamoDB point-in-time recovery</td></tr>
+      <tr><td><strong>DLQ Messages</strong></td><td>0 (target)</td><td>Messages in Dead Letter Queues</td><td>&gt; 0 &rarr; P3, &gt; 100 &rarr; P2 alert</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 11. SECURITY ==================== -->
+  <h1 id="security">11. Security Considerations</h1>
+
+  <table>
+    <thead>
+      <tr><th>Security Domain</th><th>Measure</th><th>Implementation</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Data Encryption at Rest</strong></td>
+        <td>AES-256 encryption for all stored data</td>
+        <td>DynamoDB encryption enabled, Iceberg with S3 SSE-KMS</td>
+      </tr>
+      <tr>
+        <td><strong>Data Encryption in Transit</strong></td>
+        <td>TLS 1.2+ for all communications</td>
+        <td>Kong Gateway enforces HTTPS, SQS uses SSL endpoints</td>
+      </tr>
+      <tr>
+        <td><strong>API Authentication</strong></td>
+        <td>OAuth 2.0 / API Key authentication</td>
+        <td>Kong Gateway handles auth token validation for all external APIs</td>
+      </tr>
+      <tr>
+        <td><strong>Access Control</strong></td>
+        <td>RBAC with principle of least privilege</td>
+        <td>IAM roles for each microservice with minimal required permissions</td>
+      </tr>
+      <tr>
+        <td><strong>PII Protection</strong></td>
+        <td>Customer PII data masked in logs</td>
+        <td>Log sanitization middleware in Spring Boot; PII fields encrypted in DynamoDB</td>
+      </tr>
+      <tr>
+        <td><strong>Network Security</strong></td>
+        <td>VPC isolation, private subnets for backend services</td>
+        <td>Kubernetes network policies, security groups</td>
+      </tr>
+      <tr>
+        <td><strong>Audit Trail</strong></td>
+        <td>Immutable audit logs for all operations</td>
+        <td>DynamoDB with TTL (2 year retention), CloudWatch Logs with S3 archival</td>
+      </tr>
+      <tr>
+        <td><strong>Secret Management</strong></td>
+        <td>No hardcoded secrets</td>
+        <td>AWS Secrets Manager / Kubernetes Secrets for API keys and credentials</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 12. RISK ANALYSIS ==================== -->
+  <h1 id="risk">12. Risk Analysis &amp; Mitigation</h1>
+
+  <table>
+    <thead>
+      <tr><th>Risk</th><th>Severity</th><th>Probability</th><th>Mitigation Strategy</th><th>Owner</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Data Inconsistency Across 7 Sources</strong></td>
+        <td><span class="severity-high">HIGH</span></td>
+        <td><span class="severity-medium">MEDIUM</span></td>
+        <td>Dual-write verification, reconciliation batch job, data quality checks in DEX Mart</td>
+        <td>Data Engineering</td>
+      </tr>
+      <tr>
+        <td><strong>Notification Delivery Failures</strong></td>
+        <td><span class="severity-high">HIGH</span></td>
+        <td><span class="severity-medium">MEDIUM</span></td>
+        <td>SQS retry with exponential backoff, DLQ for failed messages, Physical Letter fallback, manual escalation queue</td>
+        <td>Backend Team</td>
+      </tr>
+      <tr>
+        <td><strong>Performance Degradation at Scale</strong></td>
+        <td><span class="severity-medium">MEDIUM</span></td>
+        <td><span class="severity-low">LOW</span></td>
+        <td>DynamoDB auto-scaling, SQS throughput limits tuning, load testing before go-live, horizontal pod autoscaling</td>
+        <td>DevOps / SRE</td>
+      </tr>
+      <tr>
+        <td><strong>Regulatory Compliance Gaps</strong></td>
+        <td><span class="severity-high">HIGH</span></td>
+        <td><span class="severity-low">LOW</span></td>
+        <td>Quarterly compliance audit, detailed audit logging, automated compliance report generation</td>
+        <td>Compliance Team</td>
+      </tr>
+      <tr>
+        <td><strong>External API (Finacle) Downtime</strong></td>
+        <td><span class="severity-high">HIGH</span></td>
+        <td><span class="severity-medium">MEDIUM</span></td>
+        <td>Circuit breaker pattern via Kong, retry queues, reconciliation batch for missed updates</td>
+        <td>Backend Team</td>
+      </tr>
+      <tr>
+        <td><strong>SQS Message Loss</strong></td>
+        <td><span class="severity-high">HIGH</span></td>
+        <td><span class="severity-low">LOW</span></td>
+        <td>SQS standard guarantees at-least-once delivery, DLQ monitoring, idempotent processors</td>
+        <td>Backend Team</td>
+      </tr>
+      <tr>
+        <td><strong>Kong Gateway Failure</strong></td>
+        <td><span class="severity-medium">MEDIUM</span></td>
+        <td><span class="severity-low">LOW</span></td>
+        <td>Kong deployed in HA mode, health checks, automatic failover</td>
+        <td>Platform Team</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 13. FAILURE HANDLING ==================== -->
+  <h1 id="failure">13. Failure Handling &amp; Recovery</h1>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Failure Handling Decision Tree</div>
+    <div class="mermaid">
+flowchart TD
+    START["Message Processing\nStarted"] --> ACCT_API{"Account Detail\nInquiry API Call"}
+    ACCT_API -->|"Success"| VALIDATE{"T-1 Validation\nPassed?"}
+    ACCT_API -->|"Timeout/Error"| RETRY_ACCT{"Retry Count\n< 3?"}
+
+    RETRY_ACCT -->|"Yes"| BACKOFF_ACCT["Exponential Backoff\n+ Retry"]
+    BACKOFF_ACCT --> ACCT_API
+    RETRY_ACCT -->|"No"| DLQ["🔴 Send to DLQ\nAlert Operations"]
+
+    VALIDATE -->|"Yes"| ACTION{"Execute Primary\nAction (Status Change\nor Notification)"}
+    VALIDATE -->|"No - Status Mismatch"| SKIP["⚠️ Skip Processing\nLog Audit Event"]
+
+    ACTION -->|"Success"| POST_VERIFY{"Post-Action\nVerification"}
+    ACTION -->|"Failure"| RETRY_ACTION{"Retry Count\n< 3?"}
+
+    RETRY_ACTION -->|"Yes"| BACKOFF_ACTION["Exponential Backoff\n+ Retry"]
+    BACKOFF_ACTION --> ACTION
+    RETRY_ACTION -->|"No"| DLQ
+
+    POST_VERIFY -->|"Status Changed"| NOTIFY["Send Notification\n(SNP/PL API)"]
+    POST_VERIFY -->|"Status Unchanged"| RECON["📋 Add to\nReconciliation Queue"]
+
+    NOTIFY -->|"SNP Success"| COMPLETE["✅ Mark Complete\nLog Audit"]
+    NOTIFY -->|"SNP Failure"| FALLBACK{"Fallback to\nPhysical Letter?"}
+    FALLBACK -->|"Yes (PL eligible)"| PL_API["Send Physical Letter"]
+    FALLBACK -->|"No"| ALERT["⚠️ Alert Operations\nManual Follow-up"]
+    PL_API --> COMPLETE
+
+    style START fill:#ebf8ff,stroke:#3182ce
+    style COMPLETE fill:#f0fff4,stroke:#276749
+    style DLQ fill:#fff5f5,stroke:#c53030
+    style SKIP fill:#fffff0,stroke:#d69e2e
+    style RECON fill:#fffff0,stroke:#d69e2e
+    style ALERT fill:#fff5f5,stroke:#c53030
+    </div>
+    <div class="diagram-caption">Figure 13.1 &mdash; Comprehensive failure handling decision tree showing retry, fallback, and escalation paths</div>
+  </div>
+
+  <h2>13.1 Failure Scenarios &amp; Recovery</h2>
+
+  <table>
+    <thead>
+      <tr><th>Failure Scenario</th><th>Detection</th><th>Recovery Strategy</th><th>Escalation</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Consumer Read Failure</strong></td>
+        <td>Iceberg query timeout / error</td>
+        <td>Automatic retry with exponential backoff (max 3 retries)</td>
+        <td>After 3 retries: escalate to manual queue, alert ops team</td>
+      </tr>
+      <tr>
+        <td><strong>Processor Logic Failure</strong></td>
+        <td>Unhandled exception in business logic</td>
+        <td>DLQ redirection for failed messages</td>
+        <td>Manual review and reprocessing from DLQ dashboard</td>
+      </tr>
+      <tr>
+        <td><strong>SNP API Timeout</strong></td>
+        <td>HTTP timeout (&gt;5s) or 5xx response</td>
+        <td>Fallback to Physical Letter API if eligible; retry via DLQ</td>
+        <td>Alert operations team for manual follow-up</td>
+      </tr>
+      <tr>
+        <td><strong>Finacle Update Failure</strong></td>
+        <td>Inactivation/Dormant API returns error</td>
+        <td>Store in reconciliation queue; retry during next batch cycle</td>
+        <td>Daily reconciliation report to operations</td>
+      </tr>
+      <tr>
+        <td><strong>Kong Gateway Failure</strong></td>
+        <td>Circuit breaker opens (error rate &gt; 50%)</td>
+        <td>Messages remain in SQS; processing resumes when circuit closes</td>
+        <td>PagerDuty alert to platform team</td>
+      </tr>
+      <tr>
+        <td><strong>DynamoDB Write Failure</strong></td>
+        <td>ProvisionedThroughputExceededException</td>
+        <td>DynamoDB auto-scaling, exponential backoff on writes</td>
+        <td>Auto-scaling event logged, capacity review triggered</td>
+      </tr>
+      <tr>
+        <td><strong>Complete System Failure</strong></td>
+        <td>All processors unresponsive</td>
+        <td>Messages safe in SQS (14-day retention); process on recovery</td>
+        <td>RTO &lt; 1 hour with automated failover; RPO &lt; 15 minutes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 14. TESTING STRATEGY ==================== -->
+  <h1 id="testing">14. Testing Strategy</h1>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Testing Pyramid</div>
+    <div class="mermaid">
+pie title Test Distribution Strategy
+    "Unit Tests (80%+ coverage)" : 50
+    "Integration Tests (API & DB)" : 25
+    "Load Tests (500K accounts)" : 15
+    "UAT (Business Validation)" : 10
+    </div>
+    <div class="diagram-caption">Figure 14.1 &mdash; Test distribution following the testing pyramid approach</div>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>Test Type</th><th>Scope</th><th>Coverage Target</th><th>Tools</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Unit Tests</strong></td>
+        <td>Business logic: eligibility calculation, event routing, T-1 validation</td>
+        <td>80%+ code coverage</td>
+        <td>JUnit 5, Mockito</td>
+      </tr>
+      <tr>
+        <td><strong>Integration Tests</strong></td>
+        <td>End-to-end flow validation with mock data sources and APIs</td>
+        <td>All critical paths</td>
+        <td>Spring Boot Test, Testcontainers, LocalStack</td>
+      </tr>
+      <tr>
+        <td><strong>Load Tests</strong></td>
+        <td>500K account processing capacity verification</td>
+        <td>P99 &lt; 5 min batch, P99 &lt; 200ms API</td>
+        <td>JMeter, Gatling</td>
+      </tr>
+      <tr>
+        <td><strong>UAT</strong></td>
+        <td>Business validation of eligibility determination, notifications, and status changes</td>
+        <td>All business scenarios</td>
+        <td>Manual + automated regression suite</td>
+      </tr>
+      <tr>
+        <td><strong>Chaos Engineering</strong></td>
+        <td>Failure injection: API timeouts, SQS delays, DynamoDB throttling</td>
+        <td>All failure scenarios documented in Section 13</td>
+        <td>Chaos Monkey, Litmus</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Key Test Scenarios</h3>
+  <ol>
+    <li>Account with only financial transactions &rarr; verify correct reference date calculation</li>
+    <li>Account with mixed financial + non-financial activity &rarr; verify MAX date logic</li>
+    <li>Account at exactly 12 months &rarr; verify INACTIVE transition</li>
+    <li>Account at exactly 24 months &rarr; verify DORMANT transition</li>
+    <li>T-1 validation failure (recent activity detected) &rarr; verify processing is skipped</li>
+    <li>SNP API failure &rarr; verify fallback to Physical Letter</li>
+    <li>Concurrent batch execution &rarr; verify no duplicate processing (idempotency)</li>
+    <li>DLQ processing &rarr; verify failed messages are reprocessable</li>
+  </ol>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 15. DEPLOYMENT ==================== -->
+  <h1 id="deployment">15. Deployment Architecture &amp; Strategy</h1>
+
+  <h2>15.1 Deployment Architecture</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Kubernetes Deployment Architecture</div>
+    <div class="mermaid">
+flowchart TB
+    subgraph K8S["☸ Kubernetes Cluster"]
+        subgraph NS1["Namespace: dormancy-consumers"]
+            C1_POD["🟢 Consumer 1 Pod\n(2 replicas)"]
+            C2_POD["🟢 Consumer 2 Pod\n(2 replicas)"]
+            C3_POD["🟢 Consumer 3 Pod\n(2 replicas)"]
+        end
+
+        subgraph NS2["Namespace: dormancy-processors"]
+            P1_POD["🟣 Processor 1 Pod\n(3 replicas, HPA)"]
+            P2_POD["🟣 Processor 2 Pod\n(3 replicas, HPA)"]
+            P3_POD["🟣 Processor 3 Pod\n(3 replicas, HPA)"]
+        end
+
+        subgraph NS3["Namespace: monitoring"]
+            PROM_POD["📊 Prometheus"]
+            GRAF_POD["📈 Grafana"]
+            OTEL_POD["🔭 OTel Collector"]
+        end
+    end
+
+    subgraph AWS["☁ AWS Managed Services"]
+        SQS_SERVICE["🟠 Amazon SQS\n(3 Queues + 3 DLQs)"]
+        DYNAMO_SERVICE["🔵 Amazon DynamoDB\n(2 Tables)"]
+        CW_SERVICE["☁ CloudWatch"]
+    end
+
+    C1_POD --> SQS_SERVICE
+    C2_POD --> SQS_SERVICE
+    C3_POD --> SQS_SERVICE
+    SQS_SERVICE --> P1_POD
+    SQS_SERVICE --> P2_POD
+    SQS_SERVICE --> P3_POD
+    P1_POD --> DYNAMO_SERVICE
+    P2_POD --> DYNAMO_SERVICE
+    P3_POD --> DYNAMO_SERVICE
+    PROM_POD --> CW_SERVICE
+    OTEL_POD --> CW_SERVICE
+
+    style K8S fill:#e3f2fd,stroke:#1565c0
+    style AWS fill:#fff3e0,stroke:#ff9800
+    style NS1 fill:#e8f5e9,stroke:#4caf50
+    style NS2 fill:#f3e5f5,stroke:#9c27b0
+    style NS3 fill:#fce4ec,stroke:#e91e63
+    </div>
+    <div class="diagram-caption">Figure 15.1 &mdash; Kubernetes deployment with dedicated namespaces and AWS managed services</div>
+  </div>
+
+  <h2>15.2 Deployment Strategy</h2>
+
+  <table>
+    <thead>
+      <tr><th>Strategy</th><th>Details</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Blue-Green Deployment</strong></td>
+        <td>Zero-downtime service updates; new version deployed alongside old, traffic switched after health verification</td>
+      </tr>
+      <tr>
+        <td><strong>Canary Releases</strong></td>
+        <td>Progressive rollout: 5% &rarr; 25% &rarr; 100% traffic with automated rollback on SLA breach</td>
+      </tr>
+      <tr>
+        <td><strong>Rollback Plan</strong></td>
+        <td>Automated rollback triggered when error rate &gt; 1% or P99 latency &gt; 200ms; Kubernetes rolling update strategy with <code>maxSurge: 1, maxUnavailable: 0</code></td>
+      </tr>
+      <tr>
+        <td><strong>Health Checks</strong></td>
+        <td>Liveness and readiness probes on all pods; startup probes for slow-starting consumers</td>
+      </tr>
+      <tr>
+        <td><strong>Resource Limits</strong></td>
+        <td>CPU/Memory requests and limits defined per pod; HPA scales processors 3-10 replicas based on SQS queue depth</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>15.3 Horizontal Pod Autoscaler (HPA) Configuration</h2>
+  <table>
+    <thead>
+      <tr><th>Service</th><th>Min Replicas</th><th>Max Replicas</th><th>Scale Metric</th><th>Target</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Consumer 1-3</td><td>2</td><td>5</td><td>CPU Utilization</td><td>70%</td></tr>
+      <tr><td>Processor 1</td><td>3</td><td>10</td><td>SQS Queue Depth</td><td>&lt; 100 messages</td></tr>
+      <tr><td>Processor 2</td><td>3</td><td>10</td><td>SQS Queue Depth</td><td>&lt; 100 messages</td></tr>
+      <tr><td>Processor 3</td><td>3</td><td>10</td><td>SQS Queue Depth</td><td>&lt; 100 messages</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 16. MONITORING ==================== -->
+  <h1 id="monitoring">16. Monitoring &amp; Observability</h1>
+
+  <h2>16.1 Observability Stack</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Observability Architecture</div>
+    <div class="mermaid">
+flowchart LR
+    subgraph Apps["Application Layer"]
+        MS["Microservices\n(Spring Boot)"]
+    end
+
+    subgraph Collection["Collection Layer"]
+        OTEL["🔭 OpenTelemetry\nSDK & Collector"]
+        MICROMETER["Micrometer\nMetrics"]
+    end
+
+    subgraph Storage["Storage & Analysis"]
+        CW["☁ CloudWatch\nLogs"]
+        PROM["📊 Prometheus\nMetrics"]
+        JAEGER["Jaeger\nTraces"]
+    end
+
+    subgraph Visualization["Visualization & Alerting"]
+        GRAFANA["📈 Grafana\nDashboards"]
+        PD["🔔 PagerDuty\nAlerting"]
+    end
+
+    MS -->|"Traces"| OTEL
+    MS -->|"Metrics"| MICROMETER
+    MS -->|"Logs"| CW
+    OTEL --> JAEGER
+    MICROMETER --> PROM
+    PROM --> GRAFANA
+    JAEGER --> GRAFANA
+    CW --> GRAFANA
+    GRAFANA -->|"Alert Rules"| PD
+
+    style Apps fill:#e3f2fd,stroke:#1565c0
+    style Collection fill:#e8f5e9,stroke:#388e3c
+    style Storage fill:#fff3e0,stroke:#ff9800
+    style Visualization fill:#fce4ec,stroke:#e91e63
+    </div>
+    <div class="diagram-caption">Figure 16.1 &mdash; Three pillars of observability: Logs, Metrics, and Traces</div>
+  </div>
+
+  <h2>16.2 Key Dashboards</h2>
+
+  <table>
+    <thead>
+      <tr><th>Dashboard</th><th>Metrics</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Batch Processing Overview</strong></td>
+        <td>Accounts processed, success/failure rates, batch duration, queue depths</td>
+        <td>Real-time batch execution monitoring</td>
+      </tr>
+      <tr>
+        <td><strong>SQS Queue Health</strong></td>
+        <td>Message count, age of oldest message, DLQ depth, throughput rate</td>
+        <td>Message processing health and backpressure detection</td>
+      </tr>
+      <tr>
+        <td><strong>API Performance</strong></td>
+        <td>Latency (P50/P90/P99), error rates, throughput per API</td>
+        <td>External API dependency monitoring</td>
+      </tr>
+      <tr>
+        <td><strong>Notification Delivery</strong></td>
+        <td>SMS/Email delivery rate, PL fallback rate, channel distribution</td>
+        <td>Communication success tracking</td>
+      </tr>
+      <tr>
+        <td><strong>DynamoDB Performance</strong></td>
+        <td>Read/Write capacity units, throttled requests, latency</td>
+        <td>State management performance</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>16.3 Alerting Configuration</h2>
+  <table>
+    <thead>
+      <tr><th>Alert</th><th>Condition</th><th>Severity</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Batch Processing Delayed</td><td>Batch not completed within 5 minutes of scheduled time</td><td><span class="severity-high">P1</span></td><td>PagerDuty &rarr; On-call engineer</td></tr>
+      <tr><td>DLQ Messages Detected</td><td>DLQ message count &gt; 0</td><td><span class="severity-medium">P2</span></td><td>Slack notification + auto-ticket</td></tr>
+      <tr><td>API Error Rate High</td><td>Error rate &gt; 5% for any external API</td><td><span class="severity-medium">P2</span></td><td>PagerDuty + circuit breaker activation</td></tr>
+      <tr><td>DynamoDB Throttling</td><td>ThrottledRequests &gt; 0 for 5 minutes</td><td><span class="severity-medium">P3</span></td><td>Auto-scale + Slack notification</td></tr>
+      <tr><td>Pod CrashLoopBackOff</td><td>Any pod in CrashLoopBackOff state</td><td><span class="severity-high">P1</span></td><td>PagerDuty &rarr; On-call engineer</td></tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 17. CAPACITY PLANNING ==================== -->
+  <h1 id="capacity">17. Capacity Planning</h1>
+
+  <h2>17.1 Current Volume Estimates</h2>
+  <table>
+    <thead>
+      <tr><th>Metric</th><th>Monthly Volume</th><th>Daily Peak</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Total accounts processed</td><td>~500,000</td><td>~25,000 (batch days)</td></tr>
+      <tr><td>SQS messages (all queues combined)</td><td>~500,000</td><td>~25,000</td></tr>
+      <tr><td>External API calls (via Kong)</td><td>~1,500,000</td><td>~75,000</td></tr>
+      <tr><td>DynamoDB writes (audit + state)</td><td>~2,000,000</td><td>~100,000</td></tr>
+      <tr><td>Notifications (SMS/Email)</td><td>~200,000</td><td>~10,000</td></tr>
+    </tbody>
+  </table>
+
+  <h2>17.2 Resource Sizing</h2>
+  <table>
+    <thead>
+      <tr><th>Component</th><th>CPU (Request/Limit)</th><th>Memory (Request/Limit)</th><th>Replicas</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Consumer Pods</td><td>500m / 1000m</td><td>512Mi / 1Gi</td><td>2 each (6 total)</td></tr>
+      <tr><td>Processor Pods</td><td>500m / 1500m</td><td>512Mi / 1.5Gi</td><td>3-10 each (HPA)</td></tr>
+      <tr><td>DynamoDB (Processing State)</td><td colspan="2">On-demand capacity mode</td><td>N/A</td></tr>
+      <tr><td>DynamoDB (Audit Trail)</td><td colspan="2">On-demand capacity mode</td><td>N/A</td></tr>
+      <tr><td>SQS Queues</td><td colspan="2">Standard queues, no provisioning needed</td><td>3 + 3 DLQ</td></tr>
+    </tbody>
+  </table>
+
+  <h2>17.3 Growth Projections</h2>
+  <p>
+    With DynamoDB on-demand mode, SQS standard queues, and Kubernetes HPA, the system auto-scales to handle growth.
+    Estimated capacity headroom: <strong>3x current volume</strong> without architectural changes.
+    For &gt;3x growth, consider: SQS FIFO queues for ordering, DynamoDB DAX for caching, and additional processor replicas.
+  </p>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 18. MIGRATION PLAN ==================== -->
+  <h1 id="migration">18. Migration Plan</h1>
+
+  <h2>18.1 Migration Strategy: Parallel Run with Gradual Cutover</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Migration Timeline</div>
+    <div class="mermaid">
+gantt
+    title Dormancy System Migration Plan
+    dateFormat YYYY-MM-DD
+    axisFormat %b %d
+
+    section Phase 1: Shadow Mode
+    Deploy CBSL 2.0 in shadow mode       :a1, 2026-04-15, 14d
+    Run parallel with Finacle (compare)   :a2, after a1, 14d
+
+    section Phase 2: Partial Cutover
+    Migrate intimation to CBSL 2.0        :b1, after a2, 7d
+    Monitor and validate                  :b2, after b1, 7d
+
+    section Phase 3: Full Cutover
+    Migrate status changes to CBSL 2.0    :c1, after b2, 7d
+    Decommission Finacle batch            :c2, after c1, 7d
+
+    section Phase 4: Stabilization
+    Monitoring and optimization           :d1, after c2, 14d
+    </div>
+    <div class="diagram-caption">Figure 18.1 &mdash; Phased migration approach over ~9 weeks</div>
+  </div>
+
+  <h2>18.2 Migration Phases</h2>
+
+  <table>
+    <thead>
+      <tr><th>Phase</th><th>Duration</th><th>Activities</th><th>Success Criteria</th><th>Rollback Plan</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Phase 1: Shadow Mode</strong></td>
+        <td>4 weeks</td>
+        <td>Deploy CBSL 2.0 alongside Finacle; run both systems in parallel; compare outputs daily</td>
+        <td>100% match between Finacle and CBSL 2.0 eligibility determinations for 2 consecutive weeks</td>
+        <td>Disable CBSL 2.0 shadow processing; no customer impact</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 2: Partial Cutover</strong></td>
+        <td>2 weeks</td>
+        <td>Move intimation/notification to CBSL 2.0 while Finacle still handles status changes</td>
+        <td>99%+ notification delivery rate; zero compliance gaps</td>
+        <td>Revert intimation to Finacle; manual reconciliation for any missed notifications</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 3: Full Cutover</strong></td>
+        <td>2 weeks</td>
+        <td>Move status changes to CBSL 2.0; decommission Finacle batch job</td>
+        <td>All SLOs met for 1 week; zero P1 incidents</td>
+        <td>Re-enable Finacle CRON job; reconcile any status discrepancies</td>
+      </tr>
+      <tr>
+        <td><strong>Phase 4: Stabilization</strong></td>
+        <td>2 weeks</td>
+        <td>Performance optimization, alert tuning, documentation updates</td>
+        <td>All SLOs met consistently; team confident in operations</td>
+        <td>N/A (Finacle batch kept disabled but available for 30 days)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-break"></div>
+
+  <!-- ==================== 19. APPENDIX ==================== -->
+  <h1 id="appendix">19. Appendix</h1>
+
+  <h2>A. Glossary</h2>
+  <table>
+    <thead><tr><th>Term</th><th>Definition</th></tr></thead>
+    <tbody>
+      <tr><td><strong>CBSL</strong></td><td>Core Banking Solution Layer &mdash; Kotak's modernized banking platform</td></tr>
+      <tr><td><strong>DEX Mart</strong></td><td>Data Exchange Mart &mdash; consolidated data aggregation layer</td></tr>
+      <tr><td><strong>Dormant Account</strong></td><td>Account with no financial or non-financial activity for 24+ months</td></tr>
+      <tr><td><strong>DLQ</strong></td><td>Dead Letter Queue &mdash; SQS queue for messages that failed processing</td></tr>
+      <tr><td><strong>DWH</strong></td><td>Data Warehouse &mdash; Finacle daily extract with financial transactions</td></tr>
+      <tr><td><strong>HPA</strong></td><td>Horizontal Pod Autoscaler &mdash; Kubernetes auto-scaling mechanism</td></tr>
+      <tr><td><strong>Inactive Account</strong></td><td>Account with no financial or non-financial activity for 12-24 months</td></tr>
+      <tr><td><strong>Kong</strong></td><td>API Gateway used for routing, rate limiting, and authentication</td></tr>
+      <tr><td><strong>NB/MB</strong></td><td>Net Banking / Mobile Banking</td></tr>
+      <tr><td><strong>PL API</strong></td><td>Physical Letter API &mdash; fallback communication channel</td></tr>
+      <tr><td><strong>Reference Date</strong></td><td>MAX of last activity dates across all channels &mdash; used for eligibility</td></tr>
+      <tr><td><strong>SNP API</strong></td><td>SMS/Notification Platform API &mdash; primary communication channel</td></tr>
+      <tr><td><strong>T-1 Validation</strong></td><td>Comparing batch-computed data (T-1) with real-time API data before processing</td></tr>
+    </tbody>
+  </table>
+
+  <h2>B. Reference Documents</h2>
+  <table>
+    <thead><tr><th>Document</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td>RBI Circular DOR.SOG(LEG).REC/64/09.08.024/2023-24</td><td>Regulatory requirement for non-financial transaction inclusion</td></tr>
+      <tr><td>Dormancy &amp; Inactivation BRD v1.0</td><td>Business Requirements Document for this project</td></tr>
+      <tr><td>CBSL 2.0 Platform Architecture</td><td>Parent platform architecture documentation</td></tr>
+      <tr><td>Kotak API Gateway (Kong) Standards</td><td>API gateway configuration and routing standards</td></tr>
+    </tbody>
+  </table>
+
+  <h2>C. Decision Log</h2>
+  <table>
+    <thead><tr><th>Decision</th><th>Options Considered</th><th>Chosen</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Message Broker</td>
+        <td>Amazon SQS, Apache Kafka, RabbitMQ</td>
+        <td><strong>Amazon SQS</strong></td>
+        <td>Managed service, no operational overhead, sufficient for batch processing patterns, DLQ support, integrates well with existing AWS stack</td>
+      </tr>
+      <tr>
+        <td>State Store</td>
+        <td>DynamoDB, PostgreSQL, Redis</td>
+        <td><strong>Amazon DynamoDB</strong></td>
+        <td>Sub-millisecond latency, auto-scaling, no schema migration overhead, TTL for automatic audit record expiry</td>
+      </tr>
+      <tr>
+        <td>Data Warehouse</td>
+        <td>Apache Iceberg, Apache Hive, Snowflake</td>
+        <td><strong>Apache Iceberg</strong></td>
+        <td>ACID transactions, time-travel for debugging, partition evolution, compatible with existing data lake infrastructure</td>
+      </tr>
+      <tr>
+        <td>Scheduler</td>
+        <td>Dolphin Scheduler, Apache Airflow, AWS Step Functions</td>
+        <td><strong>Dolphin Scheduler</strong></td>
+        <td>Already adopted within Kotak CBSL 2.0 ecosystem, supports complex DAG dependencies, visual workflow editor</td>
+      </tr>
+      <tr>
+        <td>Processing Pattern</td>
+        <td>Monolithic batch, Microservices, Serverless (Lambda)</td>
+        <td><strong>Event-driven Microservices</strong></td>
+        <td>Independent scaling of consumers/processors, fault isolation, easier to extend with new event types</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top: 60px; padding: 30px; text-align: center; border-top: 2px solid var(--gray-200);">
+    <p style="color: var(--gray-500); font-size: 12px;">
+      <strong>ARCHITECTURE REVIEW BOARD (ARB) DOCUMENT</strong><br>
+      Dormancy &amp; Inactivation Management System &mdash; CBSL 2.0 Migration<br>
+      Version 3.0 | April 12, 2026 | Kotak Mahindra Bank<br><br>
+      <em>This document is confidential and intended for internal use only.</em>
+    </p>
+  </div>
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    securityLevel: 'loose',
+    flowchart: {
+      useMaxWidth: true,
+      htmlLabels: true,
+      curve: 'basis'
+    },
+    sequence: {
+      useMaxWidth: true,
+      wrap: true,
+      width: 150
+    },
+    gantt: {
+      useMaxWidth: true
+    }
+  });
+</script>
+
+</body>
+</html>
