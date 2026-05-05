@@ -657,15 +657,29 @@
   <h2 id="current-state">2.1 Current State Architecture</h2>
 
   <p>
-    The current dormancy management system is entirely dependent on <strong>Finacle batch processing</strong>, executing through the CRON job <code>genlimo_IDB_DORMNT_KB</code> during EOD/BOD cycles.
+    The current dormancy management system is entirely dependent on <strong>Finacle batch processing</strong>. Multiple Finacle CRON jobs run on a daily schedule to compute eligibility, mark account status, and dispatch intimations:
   </p>
+
+  <table>
+    <thead>
+      <tr><th>CRON Job</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>genlimo_IDB_DORMNT_KB</code></td><td>Identifies accounts crossing the dormancy threshold and marks them DORMANT in Finacle</td></tr>
+      <tr><td><code>genlimo_IDB_INACTV_KB</code></td><td>Identifies accounts crossing the inactivity threshold and marks them INACTIVE</td></tr>
+      <tr><td><code>genlimo_IDB_INTIM_KB</code></td><td>Generates 9 / 11 / 21 / 23 month intimation triggers</td></tr>
+      <tr><td><code>genlimo_IDB_PL_GEN_KB</code></td><td>Generates Physical Letter requests for accounts where digital channel is unavailable</td></tr>
+      <tr><td><code>genlimo_IDB_AUDIT_KB</code></td><td>Reconciliation and audit log generation</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:12px; color:var(--gray-500);"><em>Note: Exact CRON job names to be confirmed with the Finacle operations team during the discovery phase.</em></p>
 
   <div class="diagram-container">
     <div class="diagram-title">Current State &mdash; Finacle Batch Processing</div>
     <div class="mermaid">
 flowchart LR
     DWH[("🗄️ DWH\n(Financial Txns)")] --> MoveIT["📁 MoveIT\nFile Transfer"]
-    MoveIT --> Finacle["🏦 Finacle Core\nCRON: genlimo_IDB_DORMNT_KB"]
+    MoveIT --> Finacle["🏦 Finacle Core\nMultiple Daily CRON Jobs:\nDORMNT / INACTV / INTIM /\nPL_GEN / AUDIT"]
     Finacle --> StatusUpdate["Account Status\nUpdate"]
 
     style DWH fill:#e2e8f0,stroke:#4a5568
@@ -673,7 +687,7 @@ flowchart LR
     style Finacle fill:#9f7aea,stroke:#6b46c1,color:#fff
     style StatusUpdate fill:#e2e8f0,stroke:#4a5568
     </div>
-    <div class="diagram-caption">Figure 2.1 &mdash; Legacy architecture: file-based integration with single data source</div>
+    <div class="diagram-caption">Figure 2.1 &mdash; Legacy architecture: file-based integration driven by multiple daily Finacle CRON jobs</div>
   </div>
 
   <table>
@@ -730,25 +744,27 @@ flowchart LR
 
   <div class="diagram-container">
     <div class="diagram-title">Account Lifecycle &mdash; Status Transition Timeline</div>
-    <div class="mermaid">
-gantt
-    title Account Dormancy Timeline (from last activity reference date)
-    dateFormat X
-    axisFormat %s months
-
-    section Intimation
-    9-Month Intimation (SMS/Email)     :milestone, m1, 9, 0
-    11-Month Intimation (SMS/Email)    :milestone, m2, 11, 0
-    21-Month Intimation (SMS/Email)    :milestone, m3, 21, 0
-    23-Month Intimation (SMS/Email)    :milestone, m4, 23, 0
-
-    section Status Change
-    ACTIVE Period                      :active, a1, 0, 12
-    Mark INACTIVE (12 months)          :crit, milestone, s1, 12, 0
-    INACTIVE Period                    :a2, 12, 24
-    Mark DORMANT (24 months)           :crit, milestone, s2, 24, 0
-    </div>
-    <div class="diagram-caption">Figure 2.2 &mdash; RBI-mandated account status transition timeline with intimation milestones</div>
+    <table style="width:100%; margin:0 auto; border-collapse:separate; border-spacing:0;">
+      <thead>
+        <tr>
+          <th style="background:#1a365d; color:#fff; padding:8px;">Month from Reference Date</th>
+          <th style="background:#1a365d; color:#fff; padding:8px;">Account State</th>
+          <th style="background:#1a365d; color:#fff; padding:8px;">Action</th>
+          <th style="background:#1a365d; color:#fff; padding:8px;">Channel</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:8px; background:#f0fff4;">0 &rarr; 9 mo</td><td style="padding:8px; background:#c6f6d5; font-weight:600;">ACTIVE</td><td style="padding:8px;">No action</td><td style="padding:8px;">&mdash;</td></tr>
+        <tr><td style="padding:8px; background:#fefcbf;"><strong>9 mo</strong></td><td style="padding:8px; background:#c6f6d5; font-weight:600;">ACTIVE</td><td style="padding:8px;">Intimation #1</td><td style="padding:8px;">SMS / Email (real-time SNP alert)</td></tr>
+        <tr><td style="padding:8px; background:#fefcbf;"><strong>11 mo</strong></td><td style="padding:8px; background:#c6f6d5; font-weight:600;">ACTIVE</td><td style="padding:8px;">Intimation #2</td><td style="padding:8px;">SMS / Email (real-time SNP alert)</td></tr>
+        <tr style="background:#fed7d7;"><td style="padding:8px;"><strong>12 mo</strong></td><td style="padding:8px; font-weight:700;">ACTIVE &rarr; INACTIVE</td><td style="padding:8px;"><strong>Status change</strong> + Inactive intimation</td><td style="padding:8px;">Finacle Core API + SNP real-time alert</td></tr>
+        <tr><td style="padding:8px; background:#fffaf0;">12 &rarr; 21 mo</td><td style="padding:8px; background:#fefcbf; font-weight:600;">INACTIVE</td><td style="padding:8px;">No action</td><td style="padding:8px;">&mdash;</td></tr>
+        <tr><td style="padding:8px; background:#fefcbf;"><strong>21 mo</strong></td><td style="padding:8px; background:#fefcbf; font-weight:600;">INACTIVE</td><td style="padding:8px;">Intimation #3</td><td style="padding:8px;">SMS / Email (real-time SNP alert)</td></tr>
+        <tr><td style="padding:8px; background:#fefcbf;"><strong>23 mo</strong></td><td style="padding:8px; background:#fefcbf; font-weight:600;">INACTIVE</td><td style="padding:8px;">Intimation #4</td><td style="padding:8px;">SMS / Email (real-time SNP alert)</td></tr>
+        <tr style="background:#fed7d7;"><td style="padding:8px;"><strong>24 mo</strong></td><td style="padding:8px; font-weight:700;">INACTIVE &rarr; DORMANT</td><td style="padding:8px;"><strong>Status change</strong> + Dormant intimation</td><td style="padding:8px;">Finacle Core API + SNP real-time alert</td></tr>
+      </tbody>
+    </table>
+    <div class="diagram-caption">Figure 2.2 &mdash; RBI-mandated account lifecycle: ACTIVE &rarr; INACTIVE (12 mo) &rarr; DORMANT (24 mo) with four intimation milestones at 9 / 11 / 21 / 23 months</div>
   </div>
 
   <table>
@@ -767,10 +783,17 @@ gantt
 
   <h3>Communication Requirements</h3>
   <ul>
-    <li><strong>Primary Channel:</strong> SMS/Email via SNP API (if contact details available)</li>
-    <li><strong>Fallback Channel:</strong> Physical Letter via PL API (if email/phone unavailable or SNP API fails)</li>
-    <li><strong>Physical Letter Trigger:</strong> Event type = <code>LD</code> and free text = <code>PL</code></li>
+    <li><strong>Primary Channel:</strong> SMS/Email <strong>via SNP real-time alerts</strong> (if customer contact details are available). Both <em>status-change notifications</em> (12 mo, 24 mo) and <em>intimation alerts</em> (9, 11, 21, 23 mo) are dispatched as real-time SNP alerts to the customer.</li>
+    <li><strong>Fallback Channel:</strong> Physical Letter via PL API (when email / phone is unavailable, or when the SNP push fails after the configured retries).</li>
+    <li><strong>Physical Letter Trigger:</strong> Event type = <code>L</code> and free text = <code>PL</code> (set during eligibility computation for accounts with no digital contact).</li>
   </ul>
+
+  <div class="callout callout-info">
+    <div class="callout-title">SNP integration model</div>
+    <p>
+      SNP (Smart Notification Platform) is treated as a real-time alert engine. Processors invoke SNP <strong>directly</strong> from the application VPC; SNP <strong>does not transit Kong API Gateway</strong>. Kong is reserved for Finacle-side APIs (Account Detail Inquiry, Inactivation, Dormant) and the Physical Letter API.
+    </p>
+  </div>
 
   <div class="page-break"></div>
 
@@ -953,7 +976,7 @@ flowchart TB
         direction LR
         C1["Consumer 1\n📨 Intimation &\nPhysical Letter"]
         C2["Consumer 2\n🔄 Active→Inactive\nConversion"]
-        C3["Consumer 3\n🔄 Active→Dormant\nConversion"]
+        C3["Consumer 3\n🔄 Inactive→Dormant\nConversion"]
     end
 
     subgraph Messaging["📬 MESSAGING LAYER"]
@@ -974,13 +997,16 @@ flowchart TB
         KONG["🦍 Kong\nAPI Gateway\n(Rate Limiting, Auth)"]
     end
 
-    subgraph External["🎯 EXTERNAL SYSTEMS"]
+    subgraph KongAPIs["🎯 EXTERNAL APIs (via Kong)"]
         direction LR
-        ACCTINQ["Account Detail\nInquiry API"]
-        SNPAPI2["SNP API\n(SMS/Email)"]
+        ACCTINQ["Account Detail\nInquiry API\n(Finacle)"]
         PLAPI2["PL API\n(Physical Letter)"]
         INACTAPI["Inactivation API\n(Finacle)"]
         DORMAPI["Dormant API\n(Finacle)"]
+    end
+
+    subgraph DirectAPIs["🚀 REAL-TIME ALERTS (direct, not via Kong)"]
+        SNPAPI2["📧 SNP API\n(SMS / Email\nreal-time alert)"]
     end
 
     subgraph State["💾 STATE MANAGEMENT"]
@@ -1003,10 +1029,12 @@ flowchart TB
     P2 --> KONG
     P3 --> KONG
     KONG --> ACCTINQ
-    KONG --> SNPAPI2
     KONG --> PLAPI2
     KONG --> INACTAPI
     KONG --> DORMAPI
+    P1 ==>|"Real-time alert"| SNPAPI2
+    P2 ==>|"Real-time alert"| SNPAPI2
+    P3 ==>|"Real-time alert"| SNPAPI2
     P1 --> DYNAMO
     P2 --> DYNAMO
     P3 --> DYNAMO
@@ -1018,7 +1046,8 @@ flowchart TB
     style Messaging fill:#fffaf0,stroke:#dd6b20
     style Processors fill:#faf5ff,stroke:#6b46c1
     style Gateway fill:#e2e8f0,stroke:#003459
-    style External fill:#fff5f5,stroke:#c53030
+    style KongAPIs fill:#fff5f5,stroke:#c53030
+    style DirectAPIs fill:#fdf2f8,stroke:#ed64a6
     style State fill:#ebf4ff,stroke:#3b48cc
     </div>
     <div class="diagram-caption">Figure 5.2 &mdash; High-Level Architecture: Event-driven microservices with layered separation of concerns</div>
@@ -1060,7 +1089,7 @@ flowchart TB
       <!-- Orchestration Layer -->
       <div class="layer-label">Orchestration Layer</div>
       <div class="arch-row">
-        <div class="arch-box box-dolphin">Dolphin Scheduler<small>Batch Orchestration (BOD/EOD)</small></div>
+        <div class="arch-box box-dolphin">Dolphin Scheduler<small>Daily batch orchestration</small></div>
       </div>
 
       <div class="arrow-down"></div>
@@ -1070,7 +1099,7 @@ flowchart TB
       <div class="arch-row">
         <div class="arch-box box-java">Consumer 1<small>Intimation + PL Records</small></div>
         <div class="arch-box box-java">Consumer 2<small>Active &rarr; Inactive Records</small></div>
-        <div class="arch-box box-java">Consumer 3<small>Active &rarr; Dormant Records</small></div>
+        <div class="arch-box box-java">Consumer 3<small>Inactive &rarr; Dormant Records</small></div>
       </div>
 
       <div class="arrow-down"></div>
@@ -1096,19 +1125,26 @@ flowchart TB
       <div class="arrow-down"></div>
 
       <!-- Gateway Layer -->
-      <div class="layer-label">API Gateway &amp; External Integration</div>
+      <div class="layer-label">API Gateway &mdash; Finacle &amp; PL only</div>
       <div class="arch-row">
-        <div class="arch-box box-kong">Kong API Gateway<small>Rate Limiting / Auth / Routing</small></div>
+        <div class="arch-box box-kong">Kong API Gateway<small>Rate Limiting / Auth / Routing<br>(Finacle + PL APIs only)</small></div>
       </div>
 
       <div class="arrow-down"></div>
 
       <div class="arch-row">
         <div class="arch-box box-finacle">Account Detail<br>Inquiry API<small>T-1 Validation</small></div>
-        <div class="arch-box box-snp">SNP API<small>SMS / Email</small></div>
         <div class="arch-box box-snp">PL API<small>Physical Letter</small></div>
         <div class="arch-box box-finacle">Inactivation API<small>Finacle Status Update</small></div>
         <div class="arch-box box-finacle">Dormant API<small>Finacle Status Update</small></div>
+      </div>
+
+      <div class="section-divider"></div>
+
+      <!-- Direct SNP Path -->
+      <div class="layer-label">Real-Time Alerts (direct, not via Kong)</div>
+      <div class="arch-row">
+        <div class="arch-box box-snp">SNP API<small>SMS / Email real-time alert<br>(direct from processors)</small></div>
       </div>
 
       <div class="section-divider"></div>
@@ -1158,8 +1194,8 @@ flowchart TB
         <h4>Dolphin Scheduler Triggers Batch Jobs</h4>
         <p>Dolphin Scheduler polls Iceberg for data readiness and triggers 4 jobs:
           (a) OnDemand API for 9/11/21/23 month intimation &amp; physical letter,
-          (b) Active-Inactive conversion job,
-          (c) Active-Dormant conversion job.</p>
+          (b) Active-to-Inactive conversion job (12-month threshold),
+          (c) Inactive-to-Dormant conversion job (24-month threshold).</p>
         <span class="tech-badge">Dolphin Scheduler</span>
       </div>
     </div>
@@ -1231,10 +1267,10 @@ flowchart TB
     </div>
   </div>
 
-  <h2 id="seq-intimation">6.2 Sequence Diagram: Intimation Flow</h2>
+  <h2 id="seq-intimation">6.2 Sequence Diagram: Intimation Flow (9 / 11 / 21 / 23 Months)</h2>
 
   <div class="diagram-container">
-    <div class="diagram-title">Sequence Diagram &mdash; Intimation / Physical Letter Flow (9/11/21/23 Months)</div>
+    <div class="diagram-title">Sequence Diagram &mdash; Intimation / Physical Letter Flow (9 / 11 / 21 / 23 Months)</div>
     <div class="mermaid">
 sequenceDiagram
     participant DS as 🐬 Dolphin Scheduler
@@ -1244,12 +1280,12 @@ sequenceDiagram
     participant P1 as Processor 1<br/>(Spring Boot)
     participant KONG as 🦍 Kong Gateway
     participant ACCT as Account Detail<br/>Inquiry API
-    participant SNP as 📧 SNP API
     participant PL as ✉️ PL API
+    participant SNP as 📧 SNP API<br/>(direct, not via Kong)
     participant DB as 🔵 DynamoDB
 
-    DS->>C1: Trigger Intimation Job
-    C1->>ICE: Fetch eligible records for<br/>9/11/21/23 month milestones
+    DS->>C1: Trigger intimation job
+    C1->>ICE: Fetch eligible records for<br/>9 / 11 / 21 / 23 month milestones
     ICE-->>C1: Return eligible account records
 
     loop For each eligible record
@@ -1270,21 +1306,19 @@ sequenceDiagram
         PL-->>KONG: Acknowledgement
         KONG-->>P1: Response
     else Event Type = "L" AND Free Text = null
-        P1->>KONG: Call SNP API (SMS/Email)
-        KONG->>SNP: Send notification request
-        SNP-->>KONG: Delivery status
-        KONG-->>P1: Response
+        P1->>SNP: Real-time alert (SMS / Email)<br/>direct call (no Kong)
+        SNP-->>P1: Delivery status
     end
 
     P1->>DB: Log audit event<br/>{action, timestamp, result}
     P1->>SQS1: Delete processed message
     </div>
-    <div class="diagram-caption">Figure 6.1 &mdash; Detailed sequence for customer intimation at regulatory milestones</div>
+    <div class="diagram-caption">Figure 6.1 &mdash; Customer intimation at regulatory milestones. SNP is invoked directly as a real-time alert; only Finacle and PL APIs go through Kong.</div>
   </div>
 
   <div class="page-break"></div>
 
-  <h2 id="seq-status">6.3 Sequence Diagram: Account Status Change Flow</h2>
+  <h2 id="seq-status">6.3 Sequence Diagram: Active &rarr; Inactive Status Change (12 Months)</h2>
 
   <div class="diagram-container">
     <div class="diagram-title">Sequence Diagram &mdash; Active &rarr; Inactive Status Change (12 Months)</div>
@@ -1298,11 +1332,11 @@ sequenceDiagram
     participant KONG as 🦍 Kong Gateway
     participant ACCT as Account Detail<br/>Inquiry API
     participant INACT as Inactivation API<br/>(Finacle)
-    participant SNP as 📧 SNP API
+    participant SNP as 📧 SNP API<br/>(direct, not via Kong)
     participant DB as 🔵 DynamoDB
 
-    DS->>C2: Trigger Active→Inactive Job
-    C2->>ICE: Fetch eligible records<br/>(accounts inactive ≥12 months)
+    DS->>C2: Trigger Active→Inactive job
+    C2->>ICE: Fetch eligible records<br/>(accounts at ≥12 months from reference date)
     ICE-->>C2: Return eligible records
 
     loop For each eligible record
@@ -1317,40 +1351,92 @@ sequenceDiagram
 
     P2->>P2: Validate: T-1 status = ACTIVE<br/>AND last activity ≥ 12 months ago
 
-    alt Validation Passed
+    alt Validation passed
         P2->>KONG: Call Account Inactivation API
         KONG->>INACT: Update status to INACTIVE
         INACT-->>KONG: Confirmation
         KONG-->>P2: Response
 
-        P2->>KONG: Call Account Detail Inquiry API<br/>(Post-change verification)
+        P2->>KONG: Re-call Account Detail Inquiry API<br/>(post-change verification)
         KONG->>ACCT: Verify new status
         ACCT-->>KONG: Return updated status
         KONG-->>P2: Status = INACTIVE confirmed
 
-        P2->>KONG: Call SNP API<br/>(Inactive intimation to customer)
-        KONG->>SNP: Send inactivation notification
-        SNP-->>KONG: Delivery confirmation
-        KONG-->>P2: Response
+        P2->>SNP: Real-time alert<br/>(Inactive intimation, direct &mdash; no Kong)
+        SNP-->>P2: Delivery confirmation
 
-        P2->>DB: Log: status changed,<br/>notification sent
-    else Validation Failed
+        P2->>DB: Log: status changed + alert sent
+    else Validation failed
         P2->>DB: Log: skipped<br/>(status mismatch or recent activity)
     end
 
     P2->>SQS2: Delete processed message
     </div>
-    <div class="diagram-caption">Figure 6.2 &mdash; Active to Inactive status change with T-1 validation and post-change verification</div>
+    <div class="diagram-caption">Figure 6.2 &mdash; Active &rarr; Inactive status change with T-1 validation, post-change verification, and direct SNP real-time alert.</div>
   </div>
 
-  <div class="callout callout-info">
-    <div class="callout-title">Note: Dormancy Flow (Active &rarr; Dormant)</div>
-    <p>The Active &rarr; Dormant flow (Consumer 3 / Processor 3 / SQS Dormancy Queue) follows an identical pattern to the Inactivation flow above, but targets accounts inactive for &ge;24 months and calls the <strong>Dormant API</strong> instead of the Inactivation API.</p>
+  <div class="page-break"></div>
+
+  <h2 id="seq-dormancy">6.4 Sequence Diagram: Inactive &rarr; Dormant Status Change (24 Months)</h2>
+
+  <div class="diagram-container">
+    <div class="diagram-title">Sequence Diagram &mdash; Inactive &rarr; Dormant Status Change (24 Months)</div>
+    <div class="mermaid">
+sequenceDiagram
+    participant DS as 🐬 Dolphin Scheduler
+    participant ICE as 🧊 Iceberg View
+    participant C3 as Consumer 3<br/>(Spring Boot)
+    participant SQS3 as 🟠 Amazon SQS<br/>(Dormancy Queue)
+    participant P3 as Processor 3<br/>(Spring Boot)
+    participant KONG as 🦍 Kong Gateway
+    participant ACCT as Account Detail<br/>Inquiry API
+    participant DORM as Dormant API<br/>(Finacle)
+    participant SNP as 📧 SNP API<br/>(direct, not via Kong)
+    participant DB as 🔵 DynamoDB
+
+    DS->>C3: Trigger Inactive→Dormant job
+    C3->>ICE: Fetch eligible records<br/>(accounts at ≥24 months from reference date<br/>with current status = INACTIVE)
+    ICE-->>C3: Return eligible records
+
+    loop For each eligible record
+        C3->>SQS3: Publish message<br/>{accountId, eventType: "DORMANCY"}
+    end
+
+    SQS3->>P3: Poll message
+    P3->>KONG: Call Account Detail Inquiry API
+    KONG->>ACCT: Forward request
+    ACCT-->>KONG: Return current status,<br/>last txn date, status date
+    KONG-->>P3: Response
+
+    P3->>P3: Validate: T-1 status = INACTIVE<br/>AND last activity ≥ 24 months ago<br/>AND no reactivation since INACTIVE
+
+    alt Validation passed
+        P3->>KONG: Call Dormant API
+        KONG->>DORM: Update status to DORMANT
+        DORM-->>KONG: Confirmation
+        KONG-->>P3: Response
+
+        P3->>KONG: Re-call Account Detail Inquiry API<br/>(post-change verification)
+        KONG->>ACCT: Verify new status
+        ACCT-->>KONG: Return updated status
+        KONG-->>P3: Status = DORMANT confirmed
+
+        P3->>SNP: Real-time alert<br/>(Dormant intimation, direct &mdash; no Kong)
+        SNP-->>P3: Delivery confirmation
+
+        P3->>DB: Log: status changed + alert sent
+    else Validation failed
+        P3->>DB: Log: skipped<br/>(status no longer INACTIVE or activity detected)
+    end
+
+    P3->>SQS3: Delete processed message
+    </div>
+    <div class="diagram-caption">Figure 6.3 &mdash; Inactive &rarr; Dormant status change at the 24-month boundary. Same T-1 validation and post-change verification pattern; SNP is invoked directly for the real-time alert.</div>
   </div>
 
-  <h2 id="component-details">6.4 Component Specifications</h2>
+  <h2 id="component-details">6.5 Component Specifications</h2>
 
-  <h3>6.4.1 DEX Mart Creation Job</h3>
+  <h3>6.5.1 DEX Mart Creation Job</h3>
   <table>
     <thead><tr><th>Attribute</th><th>Details</th></tr></thead>
     <tbody>
@@ -1363,7 +1449,7 @@ sequenceDiagram
     </tbody>
   </table>
 
-  <h3>6.4.2 Consumer Services</h3>
+  <h3>6.5.2 Consumer Services</h3>
   <table>
     <thead><tr><th>Consumer</th><th>Source</th><th>Output Queue</th><th>Selection Criteria</th></tr></thead>
     <tbody>
@@ -1373,7 +1459,7 @@ sequenceDiagram
     </tbody>
   </table>
 
-  <h3>6.4.3 Processor Services</h3>
+  <h3>6.5.3 Processor Services</h3>
   <table>
     <thead><tr><th>Processor</th><th>Input Queue</th><th>T-1 Validation</th><th>Primary Action</th><th>Post-Action</th></tr></thead>
     <tbody>
@@ -1381,27 +1467,27 @@ sequenceDiagram
         <td><strong>Processor 1</strong> (SNP/PL Handler)</td>
         <td>SQS Intimation Queue</td>
         <td>Verify T-1 status matches Account Detail API</td>
-        <td>Call SNP API (if free_text = null) or PL API (if free_text = "PL")</td>
+        <td>SNP real-time alert <em>(direct, not via Kong)</em> when free_text = null;<br>PL API <em>via Kong</em> when free_text = "PL"</td>
         <td>Log audit event in DynamoDB</td>
       </tr>
       <tr>
         <td><strong>Processor 2</strong> (Inactivation Handler)</td>
         <td>SQS Inactivation Queue</td>
         <td>Verify status = ACTIVE and last_activity &ge; 12 months</td>
-        <td>Call Account Inactivation API via Kong</td>
-        <td>Verify status change, send SNP notification, log audit</td>
+        <td>Inactivation API <em>via Kong</em>; then SNP real-time alert <em>direct</em> for inactive intimation</td>
+        <td>Verify status change via Account Detail Inquiry API, log audit</td>
       </tr>
       <tr>
         <td><strong>Processor 3</strong> (Dormancy Handler)</td>
         <td>SQS Dormancy Queue</td>
         <td>Verify status = INACTIVE and last_activity &ge; 24 months</td>
-        <td>Call Account Dormant API via Kong</td>
-        <td>Verify status change, send SNP notification, log audit</td>
+        <td>Dormant API <em>via Kong</em>; then SNP real-time alert <em>direct</em> for dormant intimation</td>
+        <td>Verify status change via Account Detail Inquiry API, log audit</td>
       </tr>
     </tbody>
   </table>
 
-  <h3>6.4.4 T-1 Validation Pattern</h3>
+  <h3>6.5.4 T-1 Validation Pattern</h3>
   <div class="callout callout-success">
     <div class="callout-title">Design Pattern: T-1 Validation</div>
     <p>
@@ -2121,9 +2207,8 @@ flowchart LR
     end
 
     subgraph Storage["Storage & Analysis"]
-        CW["☁ CloudWatch\nLogs"]
+        CW["☁ CloudWatch\nLogs & Traces"]
         PROM["📊 Prometheus\nMetrics"]
-        JAEGER["Jaeger\nTraces"]
     end
 
     subgraph Visualization["Visualization & Alerting"]
@@ -2134,10 +2219,9 @@ flowchart LR
     MS -->|"Traces"| OTEL
     MS -->|"Metrics"| MICROMETER
     MS -->|"Logs"| CW
-    OTEL --> JAEGER
+    OTEL --> CW
     MICROMETER --> PROM
     PROM --> GRAFANA
-    JAEGER --> GRAFANA
     CW --> GRAFANA
     GRAFANA -->|"Alert Rules"| PD
 
@@ -2146,7 +2230,7 @@ flowchart LR
     style Storage fill:#fff3e0,stroke:#ff9800
     style Visualization fill:#fce4ec,stroke:#e91e63
     </div>
-    <div class="diagram-caption">Figure 16.1 &mdash; Three pillars of observability: Logs, Metrics, and Traces</div>
+    <div class="diagram-caption">Figure 16.1 &mdash; Three pillars of observability: Logs &amp; Traces (CloudWatch via OpenTelemetry), Metrics (Prometheus), and Visualization / Alerting (Grafana &rarr; PagerDuty).</div>
   </div>
 
   <h2>16.2 Key Dashboards</h2>
